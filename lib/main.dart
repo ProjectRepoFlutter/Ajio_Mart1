@@ -2,15 +2,61 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'screens/login_screen.dart';  // Import the LoginScreen here
+import 'package:ajio_mart/screens/login_screen.dart';  // Import the LoginScreen here
+import 'package:ajio_mart/screens/home_screen.dart';
+import 'package:ajio_mart/utils/shared_pref.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ajio_mart/widgets/main_scaffold.dart';
 
-void main() {
+class SharedPrefsHelper {
+  // Save user credentials
+  static Future<void> saveUserContactInfo(String contactType, String contactValue) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('contactType', contactType);
+    await prefs.setString('contactValue', contactValue);
+    await prefs.setBool('isLoggedIn', true);
+  }
+
+  // Retrieve user credentials
+  static Future<Map<String, String?>> getUserContactInfo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? contactType = prefs.getString('contactType');
+    String? contactValue = prefs.getString('contactValue');
+    return {
+      'contactType': contactType,
+      'contactValue': contactValue,
+    };
+  }
+
+  // Check if the user is logged in
+  static Future<bool> isLoggedIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isLoggedIn') ?? false;
+  }
+
+  // Clear user data when logging out
+  static Future<void> clearUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+}
+
+
+const String baseUrl = 'https://api.yourapp.com/v1';
+void main() async{
   WidgetsFlutterBinding.ensureInitialized(); // Ensure bindings are initialized
   Firebase.initializeApp();
-  runApp(MyApp());
+  bool isLoggedIn = await SharedPrefsHelper.isLoggedIn();
+  Map<String, String?> userCredentials = await SharedPrefsHelper.getUserContactInfo();
+  runApp(MyApp(isLoggedIn: isLoggedIn, userCredentials: userCredentials));
 }
 
 class MyApp extends StatelessWidget {
+  final bool isLoggedIn;
+  final Map<String, String?> userCredentials;
+
+  const MyApp({Key? key, required this.isLoggedIn, required this.userCredentials}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -23,7 +69,9 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.green,
           ),
-          home: LoginScreen(), // Set LoginScreen as the home screen
+          home: isLoggedIn
+          ? MainScaffold()
+          : LoginScreen(),
         );
       },
     );

@@ -50,7 +50,8 @@ class _CartScreenState extends State<CartScreen> {
             'name': product['name'],
             'price': item['price'],
             'quantity': item['quantity'],
-            'imageUrl': product['imageUrl']
+            'imageUrl': product['imageUrl'],
+            'stock': product['stock'], // Add stock status
           });
         }
       }
@@ -154,25 +155,34 @@ class _CartScreenState extends State<CartScreen> {
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold)),
                                         Text('₹${item['price']}'),
+                                        Text(
+                                          item['stock']>0
+                                              ? ''
+                                              : 'Out of stock',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
                                         Row(
                                           children: [
                                             IconButton(
                                               icon: Icon(Icons.remove),
-                                              onPressed: () {
-                                                if (item['quantity'] > 1) {
-                                                  updateQuantity(item['id'],
-                                                      item['quantity'] - 1);
-                                                }
-                                              },
+                                              onPressed: item['stock']>0 && item['quantity'] > 1
+                                                  ? () {
+                                                      updateQuantity(
+                                                          item['id'],
+                                                          item['quantity'] - 1);
+                                                    }
+                                                  : null, // Disable button if out of stock
                                             ),
                                             Text('${item['quantity']}'),
                                             IconButton(
                                               icon: Icon(Icons.add),
-                                              onPressed: () {
-                                                updateQuantity(
-                                                    item['id'].toString(),
-                                                    item['quantity'] + 1);
-                                              },
+                                              onPressed: item['stock']>0
+                                                  ? () {
+                                                      updateQuantity(
+                                                          item['id'].toString(),
+                                                          item['quantity'] + 1);
+                                                    }
+                                                  : null, // Disable button if out of stock
                                             ),
                                           ],
                                         ),

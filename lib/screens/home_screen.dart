@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   String searchQuery = '';
   String? contactType = "";
-  String? contactValue = "User";
+  String? contactValue = "";
   String? firstName = "";
   String? lastName = "";
 

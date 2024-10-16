@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ajio_mart/screens/home_screen.dart'; // Import your HomeScreen
 import 'package:ajio_mart/screens/product_list_screen.dart'; // Import your ProductScreen
 import 'package:ajio_mart/screens/cart_screen.dart'; // Import your CartScreen
+import 'package:ajio_mart/screens/profile_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   @override
@@ -25,7 +26,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       // Center(child: Text("Select a category")),
       CartScreen(),
       CartScreen(),
-      HomeScreen(),
+      ProfileScreen(),
     ]);
   }
 

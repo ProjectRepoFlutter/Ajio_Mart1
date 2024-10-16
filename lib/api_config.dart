@@ -15,6 +15,8 @@ class APIConfig {
   static const String getAllProductsInCategory = "$baseUrl/products/category/";
   static const String getAllCategories = "$baseUrl/Categories";
   static const String addToCart = "$baseUrl/cart/";
+  static const String updateQuantityInCart = "$baseUrl/cart/"; //put
+  static const String deleteProductFromCart = "$baseUrl/cart/";
   static const String getAllItemInCart = "$baseUrl/cart/"; // added user in code
 
   // Add more APIs as needed

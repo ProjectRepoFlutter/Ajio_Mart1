@@ -24,7 +24,8 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> fetchCartItems() async {
     try {
       print(APIConfig.getAllItemInCart + globals.userContactValue);
-      final response = await http.get(Uri.parse(APIConfig.getAllItemInCart + globals.userContactValue));
+      final response = await http.get(
+          Uri.parse(APIConfig.getAllItemInCart + globals.userContactValue));
       if (response.statusCode == 200) {
         final List<dynamic> items = jsonDecode(response.body)['items'];
         await fetchProductDetails(items); // Fetch product details for each item
@@ -36,26 +37,25 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  // Function to fetch product details based on cart items
   Future<void> fetchProductDetails(List<dynamic> items) async {
     List<dynamic> detailedItems = [];
     try {
       for (var item in items) {
-        final productResponse = await http.get(Uri.parse(APIConfig.getProduct + item['productId'].toString()));
+        final productResponse = await http.get(
+            Uri.parse(APIConfig.getProduct + item['productId'].toString()));
         if (productResponse.statusCode == 200) {
           final product = jsonDecode(productResponse.body);
-          // Combine product details with the cart item data
           detailedItems.add({
-            'id': item['_id'],
+            'id': item['productId'],
             'name': product['name'],
-            'price': item['price'], // price remains from cart
+            'price': item['price'],
             'quantity': item['quantity'],
-            'imageUrl': product['imageUrl'] // Assuming you have an imageUrl
+            'imageUrl': product['imageUrl']
           });
         }
       }
       setState(() {
-        cartItems = detailedItems; // Update the cart items with detailed information
+        cartItems = detailedItems; // Update cart items with detailed information
         isLoading = false;
       });
     } catch (e) {
@@ -63,16 +63,40 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  // Function to update quantity in the database via API
-  Future<void> updateQuantity(int itemId, int newQuantity) async {
+  Future<void> deleteItem(String itemId, int index) async {
     try {
-      final response = await http.post(
-        Uri.parse('YOUR_API_UPDATE_QUANTITY_ENDPOINT'),
+      final response = await http.delete(
+        Uri.parse(APIConfig.deleteProductFromCart + itemId),
+        headers: {
+          'Content-Type': 'application/json',
+          'user': globals.userContactValue
+        },
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          cartItems.removeAt(index); // Remove the item from the list
+        });
+        fetchCartItems(); // Refresh cart data after update
+      } else {
+        throw Exception('Failed to delete item');
+      }
+    } catch (e) {
+      print('Error deleting item: $e');
+    }
+  }
+
+  Future<void> updateQuantity(String itemId, int newQuantity) async {
+    try {
+      final response = await http.put(
+        Uri.parse(APIConfig.updateQuantityInCart),
         body: jsonEncode({
-          globals.userContactType: globals.userContactValue,
-          'itemId': itemId,
-          'quantity': newQuantity,
+          "user": globals.userContactValue,
+          "productId": itemId,
+          "quantity": newQuantity
         }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       );
       if (response.statusCode == 200) {
         fetchCartItems(); // Refresh cart data after update
@@ -84,10 +108,9 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  // Calculate the total price of all items in the cart
   int calculateTotalPrice() {
     return cartItems.fold(0, (total, item) {
-      return (total + int.parse(item['price'])).toInt(); // Convert price to int
+      return (total + int.parse(item['price'])).toInt();
     });
   }
 
@@ -112,13 +135,17 @@ class _CartScreenState extends State<CartScreen> {
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
                             children: [
-                              Image.network(item['imageUrl'], width: 80, height: 80),
+                              Image.network(item['imageUrl'],
+                                  width: 80, height: 80),
                               SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item['name'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    Text(item['name'],
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold)),
                                     Text('₹${item['price']}'),
                                     Row(
                                       children: [
@@ -126,7 +153,8 @@ class _CartScreenState extends State<CartScreen> {
                                           icon: Icon(Icons.remove),
                                           onPressed: () {
                                             if (item['quantity'] > 1) {
-                                              updateQuantity(item['id'], item['quantity'] - 1);
+                                              updateQuantity(item['id'],
+                                                  item['quantity'] - 1);
                                             }
                                           },
                                         ),
@@ -134,7 +162,9 @@ class _CartScreenState extends State<CartScreen> {
                                         IconButton(
                                           icon: Icon(Icons.add),
                                           onPressed: () {
-                                            updateQuantity(item['id'], item['quantity'] + 1);
+                                            updateQuantity(
+                                                item['id'].toString(),
+                                                item['quantity'] + 1);
                                           },
                                         ),
                                       ],
@@ -145,7 +175,7 @@ class _CartScreenState extends State<CartScreen> {
                               IconButton(
                                 icon: Icon(Icons.delete),
                                 onPressed: () {
-                                  // Add functionality to remove item from cart
+                                  deleteItem(item['id'], index); // Pass item id and index to delete
                                 },
                               ),
                             ],
@@ -162,8 +192,12 @@ class _CartScreenState extends State<CartScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text('₹${calculateTotalPrice()}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text('Total:',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text('₹${calculateTotalPrice()}',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
                         ],
                       ),
                       SizedBox(height: 10),

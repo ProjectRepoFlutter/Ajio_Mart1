@@ -4,6 +4,7 @@ import 'package:ajio_mart/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ajio_mart/utils/shared_pref.dart';
+import 'package:ajio_mart/widgets/main_scaffold.dart';
 import 'dart:convert';
 
 class RegistrationScreen extends StatefulWidget {
@@ -41,24 +42,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         SnackBar(content: Text('Registration successful!')),
       );
       SharedPrefsHelper.saveUserContactInfo(widget.type, widget.contact);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ),
-      );
+      Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (context) =>
+                        MainScaffold()), // LoginScreen is your desired destination
+                (Route<dynamic> route) =>
+                    false, // This removes all previous routes
+              );
     } else if (response.statusCode == 400) {
       // Show error message if registration fails
       SharedPrefsHelper.saveUserContactInfo(widget.type, widget.contact);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Welcome Back')),
       );
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ),
-      ); //TODO first and last name check
+      Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (context) =>
+                        HomeScreen()), // LoginScreen is your desired destination
+                (Route<dynamic> route) =>
+                    false, // This removes all previous routes
+              ); //TODO first and last name check
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration failed. Please try again.')),

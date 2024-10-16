@@ -7,6 +7,7 @@ import 'package:ajio_mart/screens/registration_screen.dart';
 import 'package:ajio_mart/screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ajio_mart/utils/shared_pref.dart';
+import 'package:ajio_mart/widgets/main_scaffold.dart';
 
 class VerificationScreen extends StatefulWidget {
   final String contact;
@@ -60,7 +61,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     }
   }
 
-   Future<void> _verifyOTP() async {
+  Future<void> _verifyOTP() async {
     String otp = _otpController.text.trim();
     if (otp != null) {
       try {
@@ -90,20 +91,23 @@ class _VerificationScreenState extends State<VerificationScreen> {
               }),
             );
             if (responseFromLogin.statusCode == 200) {
-              SharedPrefsHelper.saveUserContactInfo(widget.type, widget.contact);
-              Navigator.pushReplacement(
-                context,
+              SharedPrefsHelper.saveUserContactInfo(
+                  widget.type, widget.contact);
+              Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
-                  builder: (context) => HomeScreen(),
-                ),
-              ); //TODO first and last name check
+                    builder: (context) =>
+                        MainScaffold()), // LoginScreen is your desired destination
+                (Route<dynamic> route) =>
+                    false, // This removes all previous routes
+              );
             } else if (responseFromLogin.statusCode == 400) {
-              Navigator.push(
-                context,
+              Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (context) => RegistrationScreen(
                       contact: widget.contact, type: widget.type),
-                ),
+                ), // LoginScreen is your desired destination
+                (Route<dynamic> route) =>
+                    false, // This removes all previous routes
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(

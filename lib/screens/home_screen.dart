@@ -6,9 +6,9 @@ import 'package:ajio_mart/screens/product_list_screen.dart';
 import 'package:ajio_mart/models/categories_model.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ajio_mart/utils/shared_pref.dart';
-import 'package:ajio_mart/screens/login_screen.dart';
-import 'package:ajio_mart/widgets/main_scaffold.dart';
 import 'package:ajio_mart/utils/user_global.dart' as globals;
+import 'package:ajio_mart/theme/app_colors.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart'; // Import your AppColors file
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen();
@@ -28,48 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    initializeData();
     super.initState();
     fetchCategories();
-
-    print(globals.userFirstName);
-  }
-
-  Future<void> initializeData() async {
-    await setContact();
-
-    // Wait until the user info is fetched
-    await getUserInfo();
-
-    // Now that the user info is fetched, set the globals and other values
-    globals.setUserData(contactType.toString(), contactValue.toString(),firstName.toString(), lastName.toString());
-  }
-
-  Future<void> setContact() async {
-    Map<String, String?> userCredentials =
-        await SharedPrefsHelper.getUserContactInfo();
-    contactType = userCredentials['contactType'];
-    contactValue = userCredentials['contactValue'];
-  }
-
-  // Method to fetch user information
-  Future<void> getUserInfo() async {
-    try {
-      final response = await http
-          .get(Uri.parse(APIConfig.getUserInfo + contactValue.toString()));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> userInfo = jsonDecode(response.body)['user'];
-
-        // Store firstName and lastName in global variables
-        firstName = userInfo['firstName'];
-        lastName = userInfo['lastName'];
-      } else {
-        throw Exception('Failed to load user info');
-      }
-    } catch (e) {
-      print('Error fetching user info: $e');
-    }
   }
 
   Future<void> fetchCategories() async {
@@ -93,41 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // void _onItemTapped(int index) {
-  //   setState(() {
-  //     _selectedIndex = index;
-  //   });
-  //   // Handle navigation based on index
-  //   if (index == 0) {
-  //     Navigator.pushReplacement(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => HomeScreen()
-  //       ),
-  //     );
-  //   } else if (index == 1) {
-  //     // Navigate to Categories
-  //   } else if (index == 2) {
-  //     // Navigate to Cart
-  //   } else if (index == 3) {
-  //     // Navigate to Favourites
-  //   } else if (index == 4) {
-  //     // Navigate to Profile
-  //      Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => LoginScreen()
-  //       ),
-  //     );
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.primaryColor, // Set AppBar color from AppColors
         title: Text(
-            'Welcome, ${globals.userFirstName}'), // Greeting user with contact value
+            'Welcome, ${globals.userFirstName}', 
+            style: TextStyle(color: AppColors.textColor)), // Set text color
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(50.0),
           child: Padding(
@@ -135,8 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search products...',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.search),
+                hintStyle: TextStyle(color: AppColors.secondaryColor), // Hint text color
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.borderColor), // Use border color
+                ),
+                suffixIcon: Icon(Icons.search, color: AppColors.accentColor), // Icon color
               ),
               onChanged: (value) {
                 setState(() {
@@ -148,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.accentColor)) // Loader color
           : Column(
               children: [
                 // Carousel Slider
@@ -172,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ))
                       .toList(),
                 ),
-
                 // Categories Grid
                 Expanded(
                   child: GridView.builder(
@@ -185,20 +120,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       final category = categories[index];
                       return GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductScreen(
+                          PersistentNavBarNavigator.pushNewScreen(context, screen: ProductScreen(
                                 categoryId:
-                                    category.categoryId, // Pass categoryId
-                                categoryName: category
-                                    .name, // Optionally pass category name
+                                    category.categoryId,
+                                categoryName: category.name,
                               ),
-                            ),
-                          );
+                              withNavBar: true,
+                              );
                         },
                         child: Card(
                           elevation: 2,
+                          color: AppColors.backgroundColor, // Card background color
                           child: Column(
                             children: [
                               Image.network(category.imageUrl,
@@ -206,8 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  category.name, // Display category name
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  category.name,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textColor), // Set text color
                                 ),
                               ),
                             ],
@@ -219,34 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      // // Bottom Navigation Bar
-      // bottomNavigationBar: BottomNavigationBar(
-      //   items: const <BottomNavigationBarItem>[
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.home),
-      //       label: 'Home',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.category),
-      //       label: 'Categories',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.shopping_cart),
-      //       label: 'Cart',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.favorite),
-      //       label: 'Favourites',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.person),
-      //       label: 'Profile',
-      //     ),
-      //   ],
-      //   currentIndex: _selectedIndex,
-      //   selectedItemColor: Colors.amber[800],
-      //   onTap: _onItemTapped,
-      // ),
     );
   }
 }

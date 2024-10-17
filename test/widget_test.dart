@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ajio_mart/widgets/main_scaffold.dart';
+import 'package:ajio_mart/widgets/nav_bar_widget.dart';
 
 import 'package:ajio_mart/main.dart';
 
@@ -16,7 +16,7 @@ void main() {
     
     // Build our app and trigger a frame.
     await tester.pumpWidget(MaterialApp(
-        home: MainScaffold()));
+        home: NavBarWidget()));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

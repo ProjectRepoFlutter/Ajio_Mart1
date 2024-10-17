@@ -19,6 +19,9 @@ class APIConfig {
   static const String deleteProductFromCart = "$baseUrl/cart/";
   static const String getAllItemInCart = "$baseUrl/cart/"; // added user in code
 
+  //Address-related APIs
+  static const String getAllAddresses = "$baseUrl/address/"; // add suffix contact value
+
   // Add more APIs as needed
   static const String logoUrl = "https://firebasestorage.googleapis.com/v0/b/ajiomart-71d01.appspot.com/o/Logo%2Flogo.png?alt=media&token=63e84872-0e42-433c-8737-c950201db7cb";
 }

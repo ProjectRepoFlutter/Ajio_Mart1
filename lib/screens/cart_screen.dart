@@ -23,9 +23,9 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> fetchCartItems() async {
     try {
-      print(APIConfig.getAllItemInCart + globals.userContactValue);
+      print(APIConfig.getAllItemInCart + globals.userContactValue.toString());
       final response = await http.get(
-          Uri.parse(APIConfig.getAllItemInCart + globals.userContactValue));
+          Uri.parse(APIConfig.getAllItemInCart + globals.userContactValue.toString()));
       if (response.statusCode == 200) {
         final List<dynamic> items = jsonDecode(response.body)['items'];
         await fetchProductDetails(items); // Fetch product details for each item
@@ -70,7 +70,7 @@ class _CartScreenState extends State<CartScreen> {
         Uri.parse(APIConfig.deleteProductFromCart + itemId),
         headers: {
           'Content-Type': 'application/json',
-          'user': globals.userContactValue
+          'user': globals.userContactValue.toString()
         },
       );
       if (response.statusCode == 200) {

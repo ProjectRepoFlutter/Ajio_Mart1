@@ -14,26 +14,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _contactController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _checkLoginStatus(); // Check login status when the app starts
-  // }
-
-  // // Check if the user is already logged in
-  // Future<void> _checkLoginStatus() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-  //   if (isLoggedIn) {
-  //     // If logged in, navigate to home screen
-  //     Navigator.pushReplacement(
-  //       context,
-  //       MaterialPageRoute(builder: (context) => HomeScreen()),
-  //     );
-  //   }
-  // }
-
   String? validateContact(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter your mobile number or email address';

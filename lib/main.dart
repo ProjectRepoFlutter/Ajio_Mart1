@@ -1,12 +1,10 @@
 // lib/main.dart
+import 'package:ajio_mart/widgets/nav_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:ajio_mart/screens/login_screen.dart';  // Import the LoginScreen here
-import 'package:ajio_mart/screens/home_screen.dart';
-import 'package:ajio_mart/utils/shared_pref.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ajio_mart/widgets/main_scaffold.dart';
 
 class SharedPrefsHelper {
   // Save user credentials
@@ -70,7 +68,7 @@ class MyApp extends StatelessWidget {
             primarySwatch: Colors.green,
           ),
           home: isLoggedIn
-          ? MainScaffold()
+          ? NavBarWidget()
           : LoginScreen(),
         );
       },

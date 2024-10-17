@@ -1,7 +1,7 @@
 library my_project.globals;
 
-String userContactType = '';
-String userContactValue = '';
+String? userContactType = '';
+String? userContactValue = '';
 String userFirstName = 'User';
 String userLastName = '';
 String userFullName = userFirstName + ' ' + userLastName;
@@ -17,7 +17,7 @@ void clearUserData() {
 }
 
 // Example of a function to set user data
-void setUserData (String contactType, String contactValue, String firstName, String lastName) {
+void setUserData (String? contactType, String? contactValue, String firstName, String lastName) {
   userContactType = contactType;
   userContactValue = contactValue;
   userFirstName = firstName;

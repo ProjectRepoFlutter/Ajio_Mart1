@@ -1,7 +1,9 @@
+import 'package:ajio_mart/screens/address_screen.dart';
 import 'package:ajio_mart/screens/login_screen.dart';
 import 'package:ajio_mart/utils/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:ajio_mart/utils/user_global.dart' as globals;
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -32,7 +34,9 @@ class ProfileScreen extends StatelessWidget {
             title: Text('Your Addresses'),
             onTap: () {
               // Navigate to the Address Management Screen
-              Navigator.pushNamed(context, '/addressScreen');
+              PersistentNavBarNavigator.pushNewScreen(context, screen: AddressScreen(),
+                              withNavBar: true,
+                              );
             },
           ),
           Divider(),

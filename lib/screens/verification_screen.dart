@@ -7,7 +7,7 @@ import 'package:ajio_mart/screens/registration_screen.dart';
 import 'package:ajio_mart/screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ajio_mart/utils/shared_pref.dart';
-import 'package:ajio_mart/widgets/main_scaffold.dart';
+import 'package:ajio_mart/widgets/nav_bar_widget.dart';
 
 class VerificationScreen extends StatefulWidget {
   final String contact;
@@ -96,7 +96,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                     builder: (context) =>
-                        MainScaffold()), // LoginScreen is your desired destination
+                        NavBarWidget()), // LoginScreen is your desired destination
                 (Route<dynamic> route) =>
                     false, // This removes all previous routes
               );
@@ -166,7 +166,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
               ),
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.text,
             ),
             SizedBox(height: 20.h),
             ElevatedButton(

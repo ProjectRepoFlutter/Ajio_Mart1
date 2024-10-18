@@ -2,10 +2,9 @@ library my_project.globals;
 
 String? userContactType = '';
 String? userContactValue = '';
-String userFirstName = 'User';
+String userFirstName = '';
 String userLastName = '';
 String userFullName = userFirstName + ' ' + userLastName;
-String userProfilePictureUrl = '';
 
 // Example of a function to clear user data (like on logout)
 void clearUserData() {
@@ -13,11 +12,10 @@ void clearUserData() {
   userContactValue = '';
   userFirstName = '';
   userLastName = '';
-  userProfilePictureUrl = '';
 }
 
 // Example of a function to set user data
-void setUserData (String? contactType, String? contactValue, String firstName, String lastName) {
+void setUserData(String? contactType, String? contactValue, String firstName, String lastName) {
   userContactType = contactType;
   userContactValue = contactValue;
   userFirstName = firstName;

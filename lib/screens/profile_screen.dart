@@ -1,5 +1,6 @@
 import 'package:ajio_mart/screens/address_screen.dart';
 import 'package:ajio_mart/screens/login_screen.dart';
+import 'package:ajio_mart/screens/order_screen.dart';
 import 'package:ajio_mart/utils/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:ajio_mart/utils/user_global.dart' as globals;
@@ -20,7 +21,7 @@ class ProfileScreen extends StatelessWidget {
           // Full Name section
           ListTile(
             leading: Icon(Icons.person),
-            title: Text('${globals.userFullName}'),
+            title: Text('${globals.userFirstName} ${globals.userLastName}'),
             subtitle: Text('${globals.userContactValue}'),
             onTap: () {
               // Navigate to Edit Full Name Screen
@@ -47,7 +48,9 @@ class ProfileScreen extends StatelessWidget {
             title: Text('Orders'),
             onTap: () {
               // Navigate to Orders Screen
-              Navigator.pushNamed(context, '/ordersScreen');
+              PersistentNavBarNavigator.pushNewScreen(context, screen: OrdersScreen(),
+                              withNavBar: true,
+                              );
             },
           ),
           Divider(),
@@ -94,6 +97,7 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () {
               SharedPrefsHelper.clearUserData();
+              globals.clearUserData();
               // Navigate to the login screen and remove all previous routes
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(

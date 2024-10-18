@@ -21,9 +21,9 @@ class _NavBarWidgetState extends State<NavBarWidget> {
   final _controller = PersistentTabController(initialIndex: 0);
 
   @override
-  void initState() {
-    super.initState();
+  void initState(){
     setContact();
+    super.initState();
   }
 
   List<Widget> screens() {

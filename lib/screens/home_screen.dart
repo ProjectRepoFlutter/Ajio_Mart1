@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor, // Set AppBar color from AppColors
         title: Text(
-            'Welcome, ${globals.userFirstName}', 
+            'Welcome to the Ajio Mart', 
             style: TextStyle(color: AppColors.textColor)), // Set text color
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(50.0),

@@ -32,11 +32,6 @@ class SharedPrefsHelper {
     return prefs.getBool('isLoggedIn') ?? false;
   }
 
-  // Clear user data when logging out
-  static Future<void> clearUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-  }
 }
 
 

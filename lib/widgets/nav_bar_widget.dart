@@ -19,16 +19,17 @@ class NavBarWidget extends StatefulWidget {
 
 class _NavBarWidgetState extends State<NavBarWidget> {
   final _controller = PersistentTabController(initialIndex: 0);
+  int _currentIndex = 0; // Track the currently selected index
 
   @override
-  void initState(){
+  void initState() {
     setContact();
     super.initState();
   }
 
   List<Widget> screens() {
     return [
-      const HomeScreen(), // Pass the callback here
+      const HomeScreen(),
       const AllProductScreen(),
       const CartScreen(),
       ProfileScreen(),
@@ -71,8 +72,8 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     String? contactValue = userCredentials['contactValue'];
     await getUserInfo(contactType, contactValue);
   }
-  
-  static Future<void> getUserInfo(String? contactType,String? contactValue) async {
+
+  static Future<void> getUserInfo(String? contactType, String? contactValue) async {
     try {
       final response = await http
           .get(Uri.parse(APIConfig.getUserInfo + contactValue.toString()));
@@ -90,6 +91,12 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     }
   }
 
+  void _onTabSelected(int index) {
+    setState(() {
+      _currentIndex = index; // Update the current index
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PersistentTabView(
@@ -98,6 +105,7 @@ class _NavBarWidgetState extends State<NavBarWidget> {
       items: navBarItems(),
       controller: _controller,
       navBarStyle: NavBarStyle.style1,
+      onItemSelected: _onTabSelected, // Call the method on item selection
     );
   }
 }

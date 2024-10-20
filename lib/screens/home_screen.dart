@@ -11,7 +11,9 @@ import 'package:ajio_mart/theme/app_colors.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final VoidCallback? onHomeSelected; // Add this parameter
+
+  const HomeScreen({Key? key, this.onHomeSelected}) : super(key: key);
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -21,6 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Category> categories = [];
   bool isLoading = true;
   String searchQuery = '';
+
+   void refresh() {
+    // Logic to refresh the home screen, e.g., fetch new data
+    print('HomeScreen refreshed');
+    // You can call your data fetching method here
+    fetchCategories();
+  }
 
   @override
   void initState() {
@@ -59,6 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.onHomeSelected != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onHomeSelected!(); // Call the callback to update index
+      });
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.primaryColor,

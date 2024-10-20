@@ -35,7 +35,7 @@ class _AddressScreenState extends State<AddressScreen> {
           addresses = addressList
               .map((json) => {
                     'id': json['_id'],
-                    'user': json['user'],
+                    'name': json['name'],
                     'label': json['label'],
                     'addressLine1': json['addressLine1'],
                     'addressLine2': json['addressLine2'],
@@ -78,16 +78,16 @@ class _AddressScreenState extends State<AddressScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return WillPopScope(
-    onWillPop: () async {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => ProfileScreen()), // Navigate to Profile screen
-        (Route<dynamic> route) => false, // Remove all previous routes
-      );
-      return false; // Prevent default back button action
-    },
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileScreen()), // Navigate to Profile screen
+          (Route<dynamic> route) => false, // Remove all previous routes
+        );
+        return false; // Prevent default back button action
+      },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Addresses'),
@@ -95,88 +95,119 @@ Widget build(BuildContext context) {
         ),
         body: isLoading
             ? Center(child: CircularProgressIndicator())
-            : addresses.isEmpty
-                ? Center(
-                    child: Text(
-                      'No addresses available.',
-                      style: TextStyle(color: AppColors.textColor, fontSize: 18),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: addresses.length,
-                    itemBuilder: (context, index) {
-                      final address = addresses[index];
-                      return Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.all(8.0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Main Heading with Name
-                              Text(
-                                address['label']!, // Display the name as heading
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryColor,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-
-                              // Subheading with Work/Home
-                              Text(
-                                address['user']!, // Display Work/Home as subheading
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.secondaryColor,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-
-                              // Address
-                              Text(
-                                '${address['addressLine1']}, ${address['addressLine2']}, ${address['state']}, ${address['postalCode']}, ${address['phoneNumber']}',
-                                style: TextStyle(
-                                  color: AppColors.textColor,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+            : RefreshIndicator(
+                onRefresh: fetchAddresses, // Refresh when pulled down
+                child: addresses.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No addresses available.',
+                          style: TextStyle(color: AppColors.textColor, fontSize: 18),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: addresses.length,
+                        itemBuilder: (context, index) {
+                          final address = addresses[index];
+                          return Card(
+                            elevation: 2,
+                            margin: const EdgeInsets.all(8.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  TextButton.icon(
-                                      icon: Icon(Icons.edit,
-                                          color: AppColors.accentColor),
-                                      label: Text(
-                                        'Edit',
-                                        style: TextStyle(
-                                            color: AppColors.accentColor),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // Main Heading with Name
+                                            Text(
+                                              address['label']!, // Display the name as heading
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+
+                                            // Subheading with Work/Home
+                                            Text(
+                                              address['name']!, // Display Work/Home as subheading
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: AppColors.secondaryColor,
+                                              ),
+                                            ),
+                                            SizedBox(height: 8),
+
+                                            // Address
+                                            Text(
+                                              '${address['addressLine1']}, ${address['addressLine2']}, ${address['state']}, ${address['postalCode']}, ${address['phoneNumber']}',
+                                              style: TextStyle(
+                                                color: AppColors.textColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  AddressFormScreen(addressId: address['id'])),
-                                        );
-                                      }),
-                                  TextButton.icon(
-                                    icon: Icon(Icons.delete, color: Colors.red),
-                                    label: const Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                    onPressed: () => deleteAddress(index),
+
+                                      // Default Address Badge
+                                      if (address['isDefault'] == true) // Check if it's the default address
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accentColor,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Default',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton.icon(
+                                          icon: Icon(Icons.edit,
+                                              color: AppColors.accentColor),
+                                          label: Text(
+                                            'Edit',
+                                            style: TextStyle(
+                                                color: AppColors.accentColor),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AddressFormScreen(addressId: address['id'])),
+                                            );
+                                          }),
+                                      TextButton.icon(
+                                        icon: Icon(Icons.delete, color: Colors.red),
+                                        label: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                        onPressed: () => deleteAddress(index),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: AppColors.accentColor,
           onPressed: () {

@@ -14,12 +14,14 @@ class NavBarWidget extends StatefulWidget {
   const NavBarWidget({Key? key}) : super(key: key);
 
   @override
-  State<NavBarWidget> createState() => _NavBarWidgetState();
+  NavBarWidgetState createState() => NavBarWidgetState(); 
 }
 
-class _NavBarWidgetState extends State<NavBarWidget> {
+class NavBarWidgetState extends State<NavBarWidget> {
   final _controller = PersistentTabController(initialIndex: 0);
   int _currentIndex = 0; // Track the currently selected index
+
+  
 
   @override
   void initState() {
@@ -27,6 +29,38 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     super.initState();
   }
 
+  // Method to update the current index
+  void updateCurrentIndex(int index) {
+    setState(() {
+      _currentIndex = index;
+      _controller.index = index; // Update the controller's index
+    });
+  }
+
+  // Refresh the state of the selected screen
+  void _onTabSelected(int index) {
+    if (_currentIndex != index) {
+      // Reset any specific state for the current screen here if necessary
+
+      // Navigate back to the initial state of the selected screen
+      switch (index) {
+        case 0:
+          // You might want to call a method to refresh HomeScreen if necessary
+          break;
+        case 1:
+          // You might want to call a method to refresh AllProductScreen if necessary
+          break;
+        case 2:
+          // You might want to call a method to refresh CartScreen if necessary
+          break;
+        case 3:
+          // You might want to call a method to refresh ProfileScreen if necessary
+          break;
+      }
+    }
+    updateCurrentIndex(index); // Update the current index
+  }
+  
   List<Widget> screens() {
     return [
       const HomeScreen(),
@@ -91,12 +125,6 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     }
   }
 
-  void _onTabSelected(int index) {
-    setState(() {
-      _currentIndex = index; // Update the current index
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return PersistentTabView(
@@ -109,3 +137,4 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     );
   }
 }
+

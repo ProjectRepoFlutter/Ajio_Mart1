@@ -1,11 +1,12 @@
 import 'package:ajio_mart/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import "package:ajio_mart/utils/user_global.dart" as globals;
 import 'dart:convert';
+import "package:ajio_mart/utils/user_global.dart" as globals;
+import 'checkout_screen.dart';  // Import CheckoutScreen
 
 class CartScreen extends StatefulWidget {
-  const CartScreen();
+  const CartScreen({Key? key}) : super(key: key);
 
   @override
   _CartScreenState createState() => _CartScreenState();
@@ -15,6 +16,10 @@ class _CartScreenState extends State<CartScreen> {
   List<dynamic> cartItems = [];
   bool isLoading = true;
 
+  void refresh(){
+    fetchCartItems();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -22,6 +27,9 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> fetchCartItems() async {
+    setState(() {
+      isLoading = true; // Show loader when fetching data
+    });
     try {
       print(APIConfig.getAllItemInCart + globals.userContactValue.toString());
       final response = await http.get(
@@ -121,118 +129,141 @@ class _CartScreenState extends State<CartScreen> {
       appBar: AppBar(
         title: Text('Your Cart'),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : cartItems.isEmpty // Check if cartItems is empty
-              ? Center(
-                  child: Text(
-                    'Your cart is empty!',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: cartItems.length,
-                        itemBuilder: (context, index) {
-                          final item = cartItems[index];
-                          return Card(
-                            margin: EdgeInsets.all(8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Image.network(item['imageUrl'] ?? APIConfig.logoUrl,
-                                      width: 80, height: 80),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item['name'],
-                                            style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold)),
-                                        Text('₹${item['price']}'),
-                                        Text(
-                                          item['stock']>0
-                                              ? ''
-                                              : 'Out of stock',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                        Row(
-                                          children: [
-                                            IconButton(
-                                              icon: Icon(Icons.remove),
-                                              onPressed: item['stock']>0 && item['quantity'] > 1
-                                                  ? () {
-                                                      updateQuantity(
-                                                          item['id'],
-                                                          item['quantity'] - 1);
-                                                    }
-                                                  : null, // Disable button if out of stock
-                                            ),
-                                            Text('${item['quantity']}'),
-                                            IconButton(
-                                              icon: Icon(Icons.add),
-                                              onPressed: item['stock']>0
-                                                  ? () {
-                                                      updateQuantity(
-                                                          item['id'].toString(),
-                                                          item['quantity'] + 1);
-                                                    }
-                                                  : null, // Disable button if out of stock
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () {
-                                      deleteItem(item['id'], index); // Pass item id and index to delete
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: RefreshIndicator(
+        onRefresh: fetchCartItems, // Trigger refresh on pull-down
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : cartItems.isEmpty // Check if cartItems is empty
+                ? ListView( // Use ListView to support pull to refresh even when empty
+                    children: [
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
                             children: [
-                              Text('Total:',
-                                  style: TextStyle(
-                                      fontSize: 18, fontWeight: FontWeight.bold)),
-                              Text('₹${calculateTotalPrice()}',
-                                  style: TextStyle(
-                                      fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text(
+                                'Your cart is empty!',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(height: 20), // Space between text and image
+                              Image.asset(
+                                'assets/images/emptyCart.png', // Path to your empty bag image
+                                height: 200, // Adjust height as needed
+                              ),
                             ],
                           ),
-                          SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: () {
-                              // Implement checkout functionality
-                            },
-                            child: Text('Place Order'),
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: Size(double.infinity, 50),
-                              backgroundColor: Colors.yellow,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: cartItems.length,
+                          itemBuilder: (context, index) {
+                            final item = cartItems[index];
+                            return Card(
+                              margin: EdgeInsets.all(8),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  children: [
+                                    Image.network(item['imageUrl'] ?? APIConfig.logoUrl,
+                                        width: 80, height: 80),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item['name'],
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold)),
+                                          Text('₹${item['price']}'),
+                                          Text(
+                                            item['stock'] > 0 ? '' : 'Out of stock',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(Icons.remove),
+                                                onPressed: item['stock'] > 0 &&
+                                                        item['quantity'] > 1
+                                                    ? () {
+                                                        updateQuantity(
+                                                            item['id'],
+                                                            item['quantity'] - 1);
+                                                      }
+                                                    : null, // Disable button if out of stock
+                                              ),
+                                              Text('${item['quantity']}'),
+                                              IconButton(
+                                                icon: Icon(Icons.add),
+                                                onPressed: item['stock'] > 0
+                                                    ? () {
+                                                        updateQuantity(
+                                                            item['id'].toString(),
+                                                            item['quantity'] + 1);
+                                                      }
+                                                    : null, // Disable button if out of stock
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.delete),
+                                      onPressed: () {
+                                        deleteItem(item['id'], index); // Pass item id and index to delete
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Total:',
+                                    style: TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text('₹${calculateTotalPrice()}',
+                                    style: TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                // Navigate to Checkout Screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => CheckoutScreen()),
+                                );
+                              },
+                              child: Text('Place Order'),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: Size(double.infinity, 50),
+                                backgroundColor: Colors.yellow,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+      ),
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:ajio_mart/api_config.dart';
 import 'package:ajio_mart/screens/address_edit_screen.dart';
 import 'package:ajio_mart/screens/address_screen.dart';
+import 'package:ajio_mart/screens/cart_screen.dart';
 import 'package:ajio_mart/screens/home_screen.dart';
 import 'package:ajio_mart/widgets/nav_bar_widget.dart';
 import 'package:flutter/material.dart';
@@ -594,7 +595,13 @@ class AddressSelectionScreen extends StatelessWidget {
   }
 }
 
-class OrderSuccessScreen extends StatelessWidget {
+class OrderSuccessScreen extends StatefulWidget {
+  @override
+  _OrderSuccessScreenState createState() => _OrderSuccessScreenState();
+}
+
+class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
+  final GlobalKey<CartScreenState> _cartKey = GlobalKey();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -629,28 +636,28 @@ class OrderSuccessScreen extends StatelessWidget {
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (context) => HomeScreen(
-                      onHomeSelected: () {
-                        // Access NavBarWidget's method to update the index
-                        final navBarWidgetState = context
-                            .findAncestorStateOfType<NavBarWidgetState>();
-                        if (navBarWidgetState != null) {
-                          // Set the index to 0 (Home)
-                          navBarWidgetState.updateCurrentIndex(0);
-                        }
+              onPressed: () async {
+                // Access NavBarWidget's state to update the navigation index
+                final navBarWidgetState =
+                    context.findAncestorStateOfType<NavBarWidgetState>();
 
-                        // Navigate back to HomeScreen
-                        Navigator.of(context)
-                            .pop(); // Pop the CartScreen off the stack
-                      },
-                    ),
-                  ),
-                  (Route<dynamic> route) =>
-                      false, // This will remove all previous routes
-                );
+                // First, refresh the Cart screen if necessary
+                if (_cartKey.currentState != null) {
+                  _cartKey.currentState!
+                      .refresh(); // Assuming refreshScreen() exists in CartScreenState
+                }
+
+                // Switch to the HomeScreen by updating the NavBar index to 0
+                if (navBarWidgetState != null) {
+                  navBarWidgetState
+                      .updateCurrentIndex(0); // Set index to 0 for HomeScreen
+                }
+
+                // Pop two screens off the navigation stack and wait for the pop to complete
+                Navigator.of(context).pop(); // First pop
+                await Future.delayed(const Duration(
+                    milliseconds: 100)); // Delay to allow pop animation
+                Navigator.of(context).pop(); // Second pop
               },
               child: Text('Continue Shopping'),
               style: ElevatedButton.styleFrom(

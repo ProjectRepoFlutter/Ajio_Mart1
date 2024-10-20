@@ -83,7 +83,9 @@ class _AddressScreenState extends State<AddressScreen> {
       onWillPop: () async {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => ProfileScreen()), // Navigate to Profile screen
+          MaterialPageRoute(
+              builder: (context) =>
+                  ProfileScreen()), // Navigate to Profile screen
           (Route<dynamic> route) => false, // Remove all previous routes
         );
         return false; // Prevent default back button action
@@ -101,7 +103,8 @@ class _AddressScreenState extends State<AddressScreen> {
                     ? Center(
                         child: Text(
                           'No addresses available.',
-                          style: TextStyle(color: AppColors.textColor, fontSize: 18),
+                          style: TextStyle(
+                              color: AppColors.textColor, fontSize: 18),
                         ),
                       )
                     : ListView.builder(
@@ -120,11 +123,13 @@ class _AddressScreenState extends State<AddressScreen> {
                                     children: [
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             // Main Heading with Name
                                             Text(
-                                              address['label']!, // Display the name as heading
+                                              address[
+                                                  'label']!, // Display the name as heading
                                               style: TextStyle(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold,
@@ -135,7 +140,8 @@ class _AddressScreenState extends State<AddressScreen> {
 
                                             // Subheading with Work/Home
                                             Text(
-                                              address['name']!, // Display Work/Home as subheading
+                                              address[
+                                                  'name']!, // Display Work/Home as subheading
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 color: AppColors.secondaryColor,
@@ -155,13 +161,15 @@ class _AddressScreenState extends State<AddressScreen> {
                                       ),
 
                                       // Default Address Badge
-                                      if (address['isDefault'] == true) // Check if it's the default address
+                                      if (address['isDefault'] ==
+                                          true) // Check if it's the default address
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: AppColors.accentColor,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Text(
                                             'Default',
@@ -185,14 +193,21 @@ class _AddressScreenState extends State<AddressScreen> {
                                                 color: AppColors.accentColor),
                                           ),
                                           onPressed: () {
-                                            Navigator.of(context).push(
+                                            Navigator.of(context)
+                                                .push(
                                               MaterialPageRoute(
                                                   builder: (context) =>
-                                                      AddressFormScreen(addressId: address['id'])),
-                                            );
+                                                      AddressFormScreen(
+                                                          addressId:
+                                                              address['id'])),
+                                            )
+                                                .then((_) {
+                                              fetchAddresses(); // Refresh addresses when coming back
+                                            });
                                           }),
                                       TextButton.icon(
-                                        icon: Icon(Icons.delete, color: Colors.red),
+                                        icon: Icon(Icons.delete,
+                                            color: Colors.red),
                                         label: const Text(
                                           'Delete',
                                           style: TextStyle(color: Colors.red),
@@ -212,9 +227,13 @@ class _AddressScreenState extends State<AddressScreen> {
           backgroundColor: AppColors.accentColor,
           onPressed: () {
             // Implement add new address functionality here
-            Navigator.of(context).push(
+            Navigator.of(context)
+                .push(
               MaterialPageRoute(builder: (context) => AddressFormScreen()),
-            );
+            )
+                .then((_) {
+              fetchAddresses(); // Refresh addresses when coming back
+            });
           },
           child: Icon(Icons.add, color: AppColors.backgroundColor),
         ),

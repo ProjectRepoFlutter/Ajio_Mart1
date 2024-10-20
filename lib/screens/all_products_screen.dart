@@ -9,12 +9,19 @@ class AllProductScreen extends StatefulWidget {
   const AllProductScreen({Key? key})  : super(key: key);
 
   @override
-  _ProductScreenState createState() => _ProductScreenState();
+  ProductScreenState createState() => ProductScreenState();
 }
 
-class _ProductScreenState extends State<AllProductScreen> {
+class ProductScreenState extends State<AllProductScreen> {
   List<dynamic> products = [];
   bool isLoading = true;
+
+  void refresh() {
+    // Logic to refresh the home screen, e.g., fetch new data
+    print('Products refreshed');
+    // You can call your data fetching method here
+    fetchProducts();
+  }
 
   @override
   void initState() {

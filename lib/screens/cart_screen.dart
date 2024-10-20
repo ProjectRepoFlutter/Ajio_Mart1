@@ -9,10 +9,10 @@ class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
 
   @override
-  _CartScreenState createState() => _CartScreenState();
+  CartScreenState createState() => CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
+class CartScreenState extends State<CartScreen> {
   List<dynamic> cartItems = [];
   bool isLoading = true;
 
@@ -249,7 +249,9 @@ class _CartScreenState extends State<CartScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (context) => CheckoutScreen()),
-                                );
+                                ).then((_) {
+                              fetchCartItems(); // Refresh addresses when coming back
+                            });;
                               },
                               child: Text('Place Order'),
                               style: ElevatedButton.styleFrom(

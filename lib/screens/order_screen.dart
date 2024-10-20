@@ -20,14 +20,17 @@ class _OrderScreenState extends State<OrderScreen> {
     fetchOrderData();
   }
 
-  Future<void> fetchOrderData() async {
-    final response = await http.get(Uri.parse(APIConfig.getAllOrders +
-        globals.userContactValue.toString()));
+ Future<void> fetchOrderData() async {
+  final response = await http.get(Uri.parse(APIConfig.getAllOrders +
+      globals.userContactValue.toString()));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    
+    // Assuming the structure has a key 'orders' containing the list
+    if (data['orders'] is List) {
       setState(() {
-        orders = data;
+        orders = data['orders']; // Assign the list of orders
       });
 
       // Fetch product details for each order
@@ -38,9 +41,14 @@ class _OrderScreenState extends State<OrderScreen> {
         }
       }
     } else {
-      throw Exception('Failed to load orders');
+      // Handle the case where 'orders' is not a list
+      print('Expected a list of orders but got: ${data['orders']}');
     }
+  } else {
+    throw Exception('Failed to load orders');
   }
+}
+
 
   Future<void> fetchProductDetails(String productId, String orderId) async {
     final response = await http.get(Uri.parse(APIConfig.getProduct + productId));

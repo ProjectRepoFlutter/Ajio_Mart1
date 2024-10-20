@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import "package:ajio_mart/utils/user_global.dart" as globals;
 import 'dart:convert';
+import 'package:ajio_mart/screens/product_detail_screen.dart'; // Import your ProductDetailScreen
 
 class ProductScreen extends StatefulWidget {
   final String categoryId;
@@ -34,7 +35,7 @@ class _ProductScreenState extends State<ProductScreen> {
       final response = await http.get(
           Uri.parse(APIConfig.getAllProductsInCategory + widget.categoryId));
       if (response.statusCode == 200) {
-        print("products found");
+        print("Products found");
         setState(() {
           products = jsonDecode(response.body);
           isLoading = false;
@@ -59,7 +60,7 @@ class _ProductScreenState extends State<ProductScreen> {
       final response = await http.post(
         Uri.parse(apiUrl),
         body: jsonEncode({
-          "user" : globals.userContactValue,
+          "user": globals.userContactValue,
           'productId': productId,
           'quantity': quantity, // You can send quantity as 1 initially
           // Add more fields if needed, like userId, etc.
@@ -91,28 +92,35 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.categoryName),
-        ),
-        body: isLoading
-            ? Center(child: CircularProgressIndicator())
-            : GridView.builder(
-                itemCount: products.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Change the number of columns in the grid
-                  childAspectRatio: 0.6, // Aspect ratio to control item height
-                ),
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  final int rating =
-                      product['rating'] ?? 0.0; // Get rating, default to 0.0
-                  final int price = product['price'] ?? 0; // Get price as int
-                  final bool isInStock =
-                      product['stock'] > 0; // Stock availability check
+      appBar: AppBar(
+        title: Text(widget.categoryName),
+      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : GridView.builder(
+              itemCount: products.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Change the number of columns in the grid
+                childAspectRatio: 0.6, // Aspect ratio to control item height
+              ),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                final int rating = product['rating'] ?? 0.0; // Get rating, default to 0.0
+                final int price = product['price'] ?? 0; // Get price as int
+                final bool isInStock = product['stock'] > 0; // Stock availability check
 
-                  return Card(
-                    margin:
-                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                return GestureDetector( // Wrap Card with GestureDetector
+                  onTap: () {
+                    // Navigate to ProductDetailScreen when the product is tapped
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(productId: product['productId']),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
@@ -120,8 +128,7 @@ class _ProductScreenState extends State<ProductScreen> {
                         children: [
                           // Product Image
                           Image.network(
-                            (product['imageUrl'] != null &&
-                                    product['imageUrl'].isNotEmpty)
+                            (product['imageUrl'] != null && product['imageUrl'].isNotEmpty)
                                 ? product['imageUrl']
                                 : APIConfig.logoUrl, // Default image URL
                             fit: BoxFit.cover,
@@ -189,15 +196,16 @@ class _ProductScreenState extends State<ProductScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: isInStock
                                   ? Colors.blue
-                                  : Colors
-                                      .grey, // Change button color based on stock
+                                  : Colors.grey, // Change button color based on stock
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
-              ));
+                  ),
+                );
+              },
+            ),
+    );
   }
 }

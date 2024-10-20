@@ -1,121 +1,188 @@
+import 'dart:convert';
 import 'package:ajio_mart/api_config.dart';
-import 'package:ajio_mart/models/order_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:ajio_mart/utils/user_global.dart' as globals;
-import 'package:intl/intl.dart'; // For date formatting
+import 'order_detail_screen.dart'; // Import the new screen
 
-class OrdersScreen extends StatefulWidget {
+class OrderScreen extends StatefulWidget {
   @override
-  _OrdersScreenState createState() => _OrdersScreenState();
+  _OrderScreenState createState() => _OrderScreenState();
 }
 
-class _OrdersScreenState extends State<OrdersScreen> {
-  late Future<List<Order>> futureOrders;
+class _OrderScreenState extends State<OrderScreen> {
+  List<dynamic> orders = [];
+  Map<String, dynamic> productDetails = {}; // Store product details for each order
 
   @override
   void initState() {
     super.initState();
-    futureOrders = fetchOrders();
+    fetchOrderData();
   }
 
-  Future<List<Order>> fetchOrders() async {
+  Future<void> fetchOrderData() async {
     final response = await http.get(Uri.parse(APIConfig.getAllOrders +
-        globals.userContactValue.toString())); // Add your API URL here
+        globals.userContactValue.toString()));
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return (data as List).map((order) => Order.fromJson(order)).toList();
+      final data = json.decode(response.body);
+      setState(() {
+        orders = data;
+      });
+
+      // Fetch product details for each order
+      for (var order in orders) {
+        if (order['items'].isNotEmpty) {
+          String productId = order['items'][0]['productId'];
+          fetchProductDetails(productId, order['_id']); // Pass the order ID to store details uniquely
+        }
+      }
     } else {
       throw Exception('Failed to load orders');
     }
+  }
+
+  Future<void> fetchProductDetails(String productId, String orderId) async {
+    final response = await http.get(Uri.parse(APIConfig.getProduct + productId));
+
+    if (response.statusCode == 200) {
+      final productData = json.decode(response.body);
+      setState(() {
+        productDetails[orderId] = {
+          'name': productData['name'],
+          'imageUrl': productData['imageUrl'],
+        };
+      });
+    } else {
+      throw Exception('Failed to load product details');
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'Delivered':
+        return Icons.check_circle; // Check icon for delivered
+      case 'Processing':
+        return Icons.sync; // Sync icon for processing
+      case 'Shipped':
+        return Icons.local_shipping; // Shipping icon for shipped
+      case 'Pending':
+        return Icons.hourglass_empty; // Hourglass icon for pending
+      case 'Cancelled':
+        return Icons.cancel; // Cancel icon for cancelled
+      default:
+        return Icons.error; // Error icon for unknown status
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Delivered':
+        return Colors.green; // Green for delivered
+      case 'Processing':
+        return Colors.blue; // Blue for processing
+      case 'Shipped':
+        return Colors.orange; // Orange for shipped
+      case 'Pending':
+        return Colors.yellow; // Yellow for pending
+      case 'Cancelled':
+        return Colors.red; // Red for cancelled
+      default:
+        return Colors.grey; // Grey for unknown status
+    }
+  }
+
+  Text _getDeliveryMessage(String status, DateTime? deliveryDate) {
+    String message;
+    Color color;
+
+    if (status == 'Cancelled') {
+      message = 'Order Cancelled';
+      color = Colors.red;
+    } else if (status == 'Delivered') {
+      message = 'Delivered on ${deliveryDate?.toLocal().toString().split(' ')[0]}';
+      color = Colors.green;
+    } else if (deliveryDate == null) {
+      message = 'Arriving Soon';
+      color = Colors.orange; // Optional color for "Arriving Soon"
+    } else {
+      message = 'Arriving on ${deliveryDate?.toLocal().toString().split(' ')[0]}';
+      color = Colors.blue; // Optional color for arriving messages
+    }
+
+    return Text(
+      message,
+      style: TextStyle(color: color), // Apply the color to the text
+    );
+  }
+
+  Future<void> _onRefresh() async {
+    await fetchOrderData(); // Refresh the order data
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Orders'),
+        title: Text('Order Details'),
       ),
-      body: FutureBuilder<List<Order>>(
-        future: futureOrders,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-            return Center(child: Text('No orders found.'));
-          } else if (snapshot.hasData) {
-            final orders = snapshot.data!;
-            return ListView.builder(
-              itemCount: orders.length,
-              itemBuilder: (context, index) {
-                final order = orders[index];
-                return Card(
-                  child: ListTile(
-                    title: _buildProductName(order),
-                    subtitle: _buildDeliveryDate(order),
-                    trailing: _getStatusIcon(order.orderStatus),
-                  ),
-                );
-              },
-            );
-          } else {
-            return Center(child: Text('No data available.'));
-          }
-        },
+      body: RefreshIndicator(
+        onRefresh: _onRefresh, // Trigger refresh on pull down
+        child: orders.isEmpty
+            ? Center(child: CircularProgressIndicator())
+            : ListView.builder(
+                itemCount: orders.length,
+                itemBuilder: (context, index) {
+                  final order = orders[index];
+                  final deliveryDate = order['deliveredAt'] != null
+                      ? DateTime.parse(order['deliveredAt']).toLocal()
+                      : null;
+                  final orderId = order['_id'];
+                  final productDetail = productDetails[orderId];
+                  final orderStatus = order['orderStatus'];
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderDetailScreen(order: order), // Navigate to order details
+                        ),
+                      );
+                    },
+                    child: ListTile(
+                      leading: productDetail != null && productDetail['imageUrl'] != null
+                          ? Image.network(productDetail['imageUrl'])
+                          : Icon(Icons.image),
+                      title: Text(
+                        order['items'].length > 1 && productDetail != null
+                            ? '${productDetail['name']}...and more'
+                            : productDetail != null ? productDetail['name'] : 'Loading...',
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _getDeliveryMessage(orderStatus, deliveryDate), // Display colored delivery message
+                          SizedBox(height: 4), // Add some spacing between lines
+                          Text(
+                            'To: ${order['deliveryAddress']}', // Add "To: " before the address
+                            style: TextStyle(
+                              color: Colors.black54,
+                            ),
+                            maxLines: 1, // Limit to one line
+                            overflow: TextOverflow.ellipsis, // Add ellipsis if text overflows
+                          ),
+                        ],
+                      ),
+                      trailing: Icon(
+                        _getStatusIcon(orderStatus),
+                        color: _getStatusColor(orderStatus),
+                      ),
+                    ),
+                  );
+                },
+              ),
       ),
     );
-  }
-
-  // Helper function to build the product name in one line, truncated if too long
-  Widget _buildProductName(Order order) {
-    // Assuming the first product in the items list is representative
-    final firstProduct = order.items.isNotEmpty ? order.items[0] : null;
-    final productName = firstProduct != null
-        ? 'Product ID: ${firstProduct.productId}'
-        : 'Unknown Product';
-
-    return Text(
-      productName,
-      overflow: TextOverflow.ellipsis, // Truncate with '...'
-      style: TextStyle(fontWeight: FontWeight.bold),
-    );
-  }
-
-  // Helper function to display the correct delivery date based on the order status
-  Widget _buildDeliveryDate(Order order) {
-    String deliveryText;
-    DateTime deliveryDate;
-
-    if (order.orderStatus == 'Delivered') {
-      deliveryText = 'Delivered on: ';
-      deliveryDate = order.deliveredAt;
-    } else {
-      deliveryText = 'Expected delivery on: ';
-      deliveryDate = order
-          .deliveredAt; // Assuming deliveredAt is used as expected date too
-    }
-
-    // Format the date to a readable format
-    String formattedDate = DateFormat.yMMMd().format(deliveryDate);
-
-    return Text('$deliveryText $formattedDate');
-  }
-
-  // Helper function to return status icon based on delivery status
-  Widget _getStatusIcon(String status) {
-    switch (status) {
-      case 'Delivered':
-        return Icon(Icons.check_circle, color: Colors.green);
-      case 'Pending':
-        return Icon(Icons.hourglass_empty, color: Colors.orange);
-      case 'Cancelled':
-        return Icon(Icons.cancel, color: Colors.red);
-      default:
-        return Icon(Icons.info, color: Colors.grey);
-    }
   }
 }

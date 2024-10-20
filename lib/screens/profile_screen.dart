@@ -48,7 +48,7 @@ class ProfileScreen extends StatelessWidget {
             title: Text('Orders'),
             onTap: () {
               // Navigate to Orders Screen
-              PersistentNavBarNavigator.pushNewScreen(context, screen: OrdersScreen(),
+              PersistentNavBarNavigator.pushNewScreen(context, screen: OrderScreen(),
                               withNavBar: true,
                               );
             },

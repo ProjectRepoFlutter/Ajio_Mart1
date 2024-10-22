@@ -142,6 +142,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           context,
           MaterialPageRoute(builder: (context) => OrderSuccessScreen()),
         );
+      }else if(response.statusCode == 400){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Your cart is empty!')),
+        );
       } else {
         print('Failed to submit order. Error: ${response.body}');
       }
@@ -595,6 +599,7 @@ class AddressSelectionScreen extends StatelessWidget {
   }
 }
 
+
 class OrderSuccessScreen extends StatefulWidget {
   @override
   _OrderSuccessScreenState createState() => _OrderSuccessScreenState();
@@ -602,72 +607,80 @@ class OrderSuccessScreen extends StatefulWidget {
 
 class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
   final GlobalKey<CartScreenState> _cartKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Order Status'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle, // Success icon
-              size: 100,
-              color: Colors.green,
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Order Placed Successfully!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+    return WillPopScope(
+      onWillPop: () async {
+        // Pop two screens off the navigation stack
+        Navigator.of(context).pop(); // First pop
+        await Future.delayed(const Duration(milliseconds: 100)); // Delay for animation
+        Navigator.of(context).pop(); // Second pop
+        return false; // Prevent the default back action
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Order Status'),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.check_circle, // Success icon
+                size: 100,
+                color: Colors.green,
               ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Thank you for your order!',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.black54,
+              SizedBox(height: 20),
+              Text(
+                'Order Placed Successfully!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () async {
-                // Access NavBarWidget's state to update the navigation index
-                final navBarWidgetState =
-                    context.findAncestorStateOfType<NavBarWidgetState>();
-
-                // First, refresh the Cart screen if necessary
-                if (_cartKey.currentState != null) {
-                  _cartKey.currentState!
-                      .refresh(); // Assuming refreshScreen() exists in CartScreenState
-                }
-
-                // Switch to the HomeScreen by updating the NavBar index to 0
-                if (navBarWidgetState != null) {
-                  navBarWidgetState
-                      .updateCurrentIndex(0); // Set index to 0 for HomeScreen
-                }
-
-                // Pop two screens off the navigation stack and wait for the pop to complete
-                Navigator.of(context).pop(); // First pop
-                await Future.delayed(const Duration(
-                    milliseconds: 100)); // Delay to allow pop animation
-                Navigator.of(context).pop(); // Second pop
-              },
-              child: Text('Continue Shopping'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-                backgroundColor: Colors.yellow,
+              SizedBox(height: 10),
+              Text(
+                'Thank you for your order!',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.black54,
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () async {
+                  // Access NavBarWidget's state to update the navigation index
+                  final navBarWidgetState =
+                      context.findAncestorStateOfType<NavBarWidgetState>();
+
+                  // First, refresh the Cart screen if necessary
+                  if (_cartKey.currentState != null) {
+                    _cartKey.currentState!.refresh(); // Assuming refresh() exists in CartScreenState
+                  }
+
+                  // Switch to the HomeScreen by updating the NavBar index to 0
+                  if (navBarWidgetState != null) {
+                    navBarWidgetState.updateCurrentIndex(0); // Set index to 0 for HomeScreen
+                  }
+
+                  // Pop two screens off the navigation stack and wait for the pop to complete
+                  Navigator.of(context).pop(); // First pop
+                  await Future.delayed(const Duration(milliseconds: 100)); // Delay to allow pop animation
+                  Navigator.of(context).pop(); // Second pop
+                },
+                child: Text('Continue Shopping'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 50),
+                  backgroundColor: Colors.yellow,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+

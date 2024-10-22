@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ajio_mart/api_config.dart';
-import 'package:ajio_mart/utils/user_global.dart' as globals; // Import global variables
+import 'package:ajio_mart/utils/user_global.dart' as globals;
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -15,19 +15,23 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Map<String, dynamic>? productDetails; // Store product details
+  int quantityInCart = 0; // To track quantity of the product in the cart
 
   @override
   void initState() {
     super.initState();
     fetchProductDetails(); // Fetch product details when the screen is initialized
+    checkIfProductInCart(); // Check if the product is already in the cart
   }
 
   Future<void> fetchProductDetails() async {
-    final response = await http.get(Uri.parse(APIConfig.getProduct + widget.productId));
+    final response =
+        await http.get(Uri.parse(APIConfig.getProduct + widget.productId));
 
     if (response.statusCode == 200) {
       setState(() {
-        productDetails = json.decode(response.body); // Parse the product details
+        productDetails =
+            json.decode(response.body); // Parse the product details
       });
     } else {
       // Handle error
@@ -35,18 +39,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
-  Future<void> addToCart(BuildContext context, String productId, int quantity) async {
-    final String apiUrl = APIConfig.addToCart; // Add your API endpoint for adding to cart
+  Future<void> checkIfProductInCart() async {
+  final cartResponse = await http.get(Uri.parse(APIConfig.getAllItemInCart + globals.userContactValue.toString()));
+  
+  if (cartResponse.statusCode == 200) {
+    final cartData = json.decode(cartResponse.body);
+
+    // Assuming `cartData` is a Map and contains a list of items under a specific key
+    List<dynamic> cartItems = cartData['items'] ?? []; // Replace 'items' with the actual key
+
+    final cartItem = cartItems.firstWhere(
+      (item) => item['productId'] == widget.productId, 
+      orElse: () => null
+    );
+
+    if (cartItem != null) {
+      setState(() {
+        quantityInCart = cartItem['quantity'];
+      });
+    }
+  } else {
+    // Handle the case where the API response is not successful
+    throw Exception('Failed to load cart items');
+  }
+}
+
+  Future<void> addToCart(
+      BuildContext context, String productId, int quantity) async {
+    final String apiUrl =
+        APIConfig.addToCart; // Add your API endpoint for adding to cart
 
     try {
       // Send POST request to add product to cart
       final response = await http.post(
         Uri.parse(apiUrl),
         body: jsonEncode({
-          "user": globals.userContactValue, // Use global variable for user contact
+          "user":
+              globals.userContactValue, // Use global variable for user contact
           'productId': productId,
-          'quantity': quantity, // You can send quantity as 1 initially
-          // Add more fields if needed, like userId, etc.
+          'quantity': quantity,
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -54,12 +85,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
 
       if (response.statusCode == 200) {
-        // If product added successfully
+        setState(() {
+          quantityInCart += quantity; // Update quantity in cart
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Product added to cart!')),
         );
       } else {
-        // Show error if the product was not added
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to add product to cart!')),
         );
@@ -72,6 +104,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  void updateCartQuantity(int newQuantity) {
+    setState(() {
+      quantityInCart = newQuantity; // Update the quantity in the cart
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (productDetails == null) {
@@ -79,7 +117,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         appBar: AppBar(
           title: Text('Product Details'),
         ),
-        body: Center(child: CircularProgressIndicator()), // Show loading indicator
+        body: Center(
+            child: CircularProgressIndicator()), // Show loading indicator
       );
     }
 
@@ -104,7 +143,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             SizedBox(height: 8), // Space between image and separator
             Divider(thickness: 2), // Separator after the image
             SizedBox(height: 16), // Space after the separator
-            
+
             // Display product name
             Text(
               productDetails!['name'],
@@ -138,16 +177,62 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 16),
-            // Add to Cart button
-            ElevatedButton(
-              onPressed: isInStock
-                  ? () {
-                      // Call addToCart function when button is pressed
-                      addToCart(context, widget.productId, 1); // Assuming quantity is 1
-                    }
-                  : null, // Disable button if out of stock
-              child: Text('Add to Cart'),
-            ),
+
+            // Add to Cart section
+            quantityInCart > 0
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey), // Add border
+                          borderRadius:
+                              BorderRadius.circular(8), // Rounded edges
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.remove),
+                              color: Colors.green,
+                              onPressed: quantityInCart > 1
+                                  ? () {
+                                      updateCartQuantity(quantityInCart - 1);
+                                      // Optionally, you can add an API call to update the cart on the server
+                                    }
+                                  : null, // Disable if quantity is 1
+                            ),
+                            Text(
+                              '$quantityInCart',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.add),
+                              color: Colors.green,
+                              onPressed: isInStock
+                                  ? () {
+                                      updateCartQuantity(quantityInCart + 1);
+                                      // Optionally, you can add an API call to update the cart on the server
+                                    }
+                                  : null, // Disable if out of stock
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : ElevatedButton(
+                    onPressed: isInStock
+                        ? () {
+                            addToCart(context, widget.productId,
+                                1); // Assuming quantity is 1
+                          }
+                        : null, // Disable button if out of stock
+                    child: Text('Add to Cart'),
+                  ),
           ],
         ),
       ),

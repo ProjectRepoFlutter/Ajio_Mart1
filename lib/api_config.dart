@@ -1,6 +1,6 @@
 class APIConfig {
   static const String baseUrl =
-      "https://ajiomartserver.onrender.com"; // Base URL for all API calls
+      "https://ajiomart.onrender.com"; // Base URL for all API calls
 
   // Auth-related APIs
   static const String sendOTP = "$baseUrl/users/sendOtp/";

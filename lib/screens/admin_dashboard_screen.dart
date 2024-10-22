@@ -8,434 +8,479 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  List products = [];
-  List filteredProducts = []; // For product search
-  List categories = [];
-  List filteredCategories = []; // For category search
-  bool isLoading = true;
-  String searchTerm = ''; // For product search term
-  String categorySearchTerm = ''; // For category search term
-
-  @override
-  void initState() {
-    super.initState();
-    fetchProducts();
-    fetchCategories();
-  }
-
-  // Fetch products from API
-  Future<void> fetchProducts() async {
-    final response = await http.get(Uri.parse('http://192.168.170.164:5000/products'));
-
-    if (response.statusCode == 200) {
-      setState(() {
-        products = json.decode(response.body);
-        filteredProducts = products; // Initially all products
-        isLoading = false;
-      });
-    } else {
-      throw Exception('Failed to load products');
-    }
-  }
-
-  // Fetch categories from API
-  Future<void> fetchCategories() async {
-    final response = await http.get(Uri.parse('http://192.168.170.164:5000/categories'));
-
-    if (response.statusCode == 200) {
-      setState(() {
-        categories = json.decode(response.body);
-        filteredCategories = categories; // Initially all categories
-        isLoading = false;
-      });
-    } else {
-      throw Exception('Failed to load categories');
-    }
-  }
-
-  // Delete a product
-  Future<void> deleteProduct(int id) async {
-    final response = await http.delete(Uri.parse('http://192.168.170.164:5000/products/$id'));
-
-    if (response.statusCode == 200) {
-      fetchProducts(); // Refresh the list after deletion
-    } else {
-      throw Exception('Failed to delete product');
-    }
-  }
-
-  // Delete a category
-  Future<void> deleteCategory(int id) async {
-    final response = await http.delete(Uri.parse('http://192.168.170.164:5000/categories/$id'));
-
-    if (response.statusCode == 200) {
-      fetchCategories(); // Refresh the list after deletion
-    } else {
-      throw Exception('Failed to delete category');
-    }
-  }
-
-  // Add a new product
-  Future<void> addProduct(String productId, String name, String categoryId, String description, int price, int stock, String imageUrl) async {
-    final response = await http.post(
-      Uri.parse('http://192.168.170.164:5000/products'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
-      body: json.encode({
-        'productId': productId,
-        'name': name,
-        'categoryId': categoryId,
-        'description': description,
-        'price': price,
-        'stock': stock,
-        'imageUrl': imageUrl // Sample image for now
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      fetchProducts(); // Refresh the product list after adding
-    } else {
-      throw Exception('Failed to add product');
-    }
-  }
-
-  // Add a new category
-  Future<void> addCategory(String categoryId, String name, String description, String imageUrl) async {
-    final response = await http.post(
-      Uri.parse('http://192.168.170.164:5000/categories'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
-      body: json.encode({
-        'categoryId': categoryId,
-        'name': name,
-        'description': description,
-        'imageUrl': imageUrl
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      fetchCategories(); // Refresh the category list after adding
-    } else {
-      throw Exception('Failed to add category');
-    }
-  }
-
-  // Search products
-  void searchProducts(String searchTerm) {
-    setState(() {
-      filteredProducts = products
-          .where((product) =>
-              product['name'].toLowerCase().contains(searchTerm.toLowerCase()))
-          .toList();
-    });
-  }
-
-  // Search categories
-  void searchCategories(String searchTerm) {
-    setState(() {
-      filteredCategories = categories
-          .where((category) =>
-              category['name'].toLowerCase().contains(searchTerm.toLowerCase()))
-          .toList();
-    });
-  }
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Panel'),
+        title: Text('Admin Panel'),
         backgroundColor: Colors.deepOrange,
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section for Product Management with Search
-                    _buildSectionTitle('Products', context),
-                    SizedBox(height: 10),
-                    _buildSearchBar('Search Products', searchProducts),
-                    SizedBox(height: 10),
-                    _buildProductList(context),
+      body: _selectedIndex == 0 ? ProductSection() : CategorySection(),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: 'Products',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category),
+            label: 'Categories',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.deepOrange,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
+    );
+  }
+}
 
-                    SizedBox(height: 20),
-                    // Section for Category Management with Search
-                    _buildSectionTitle('Categories', context),
-                    SizedBox(height: 10),
-                    _buildSearchBar('Search Categories', searchCategories),
-                    SizedBox(height: 10),
-                    _buildCategoryList(context),
-                  ],
+class ProductSection extends StatefulWidget {
+  @override
+  _ProductSectionState createState() => _ProductSectionState();
+}
+
+class _ProductSectionState extends State<ProductSection> {
+  List products = [];
+  bool isLoading = true;
+  String searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final response =
+          await http.get(Uri.parse('http://192.168.31.23:5000/products'));
+      if (response.statusCode == 200) {
+        setState(() {
+          products = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print(e);
+    }
+  }
+
+  Future<void> addProduct(Map<String, dynamic> product) async {
+    final response = await http.post(
+      Uri.parse('http://192.168.31.23:5000/products'),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
+      body: json.encode(product),
+    );
+
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Product added successfully.')),
+      );
+      fetchProducts(); // Refresh the product list
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add product.')),
+      );
+      throw Exception('Failed to add product');
+    }
+  }
+
+  Future<void> updateProduct(String id, Map<String, dynamic> product) async {
+    final response = await http.put(
+      Uri.parse('http://192.168.31.23:5000/products/$id'),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
+      body: json.encode(product),
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Product updated successfully.')),
+      );
+      fetchProducts();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update product.')),
+      );
+      throw Exception('Failed to update product');
+    }
+  }
+
+  void _showProductDialog({Map<String, dynamic>? product}) {
+    final TextEditingController nameController =
+        TextEditingController(text: product?['name']);
+    final TextEditingController productIdController =
+        TextEditingController(text: product?['productId']);
+    final TextEditingController descriptionController =
+        TextEditingController(text: product?['description']);
+    final TextEditingController priceController =
+        TextEditingController(text: product?['price']?.toString());
+    final TextEditingController mrpController =
+        TextEditingController(text: product?['mrp']?.toString());
+    final TextEditingController stockController =
+        TextEditingController(text: product?['stock']?.toString());
+    final TextEditingController categoryIdController =
+        TextEditingController(text: product?['categoryId']);
+    final TextEditingController imageUrlController =
+        TextEditingController(text: product?['imageUrl']);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(product == null ? 'Add Product' : 'Edit Product'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildTextField(nameController, 'Product Name'),
+                _buildTextField(productIdController, 'Product Id'),
+                _buildTextField(descriptionController, 'Description'),
+                _buildTextField(priceController, 'Price', isNumber: true),
+                _buildTextField(mrpController, 'MRP', isNumber: true),
+                _buildTextField(stockController, 'Stock', isNumber: true),
+                _buildTextField(categoryIdController, 'Category Id',
+                    isNumber: true),
+                _buildTextField(imageUrlController, 'Image URL'),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Map<String, dynamic> productData = {
+                  'name': nameController.text,
+                  'productId': productIdController.text,
+                  'description': descriptionController.text,
+                  'price': double.tryParse(priceController.text) ?? 0.0,
+                  'mrp': double.tryParse(mrpController.text) ?? 0.0,
+                  'stock': int.tryParse(stockController.text) ?? 0,
+                  'categoryId': categoryIdController.text,
+                  'imageUrl': imageUrlController.text,
+                };
+
+                if (product == null) {
+                  addProduct(productData);
+                } else {
+                  updateProduct(product['_id'], productData);
+                }
+                Navigator.of(context).pop();
+              },
+              child: Text(product == null ? 'Add' : 'Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {bool isNumber = false}) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isLoading
+        ? Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Search Products',
+                    suffixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      searchQuery = value;
+                    });
+                  },
                 ),
               ),
-            ),
-      floatingActionButton: _buildFABMenu(context),
-    );
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: fetchProducts,
+                  child: ListView.builder(
+                    padding: EdgeInsets.all(10),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      var product = products[index];
+                      if (product['name']
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase())) {
+                        return _buildProductItem(product);
+                      }
+                      return Container();
+                    },
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => _showProductDialog(),
+                child: Text('Add Product'),
+              ),
+            ],
+          );
   }
 
-  // Section title widget
-  Widget _buildSectionTitle(String title, BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
+  Widget _buildProductItem(product) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: EdgeInsets.symmetric(vertical: 5),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundImage: NetworkImage(
+              product['imageUrl'] ?? 'https://via.placeholder.com/150'),
+        ),
+        title: Text(product['name'],
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle:
+            Text('Stock: ${product['stock']}, Price: ₹${product['price']}'),
+        trailing: IconButton(
+          icon: Icon(Icons.edit),
+          onPressed: () {
+            _showProductDialog(product: product);
+          },
+        ),
       ),
     );
   }
+}
 
-  // Search bar widget
-  Widget _buildSearchBar(String label, Function(String) onSearchChanged) {
+class CategorySection extends StatefulWidget {
+  @override
+  _CategorySectionState createState() => _CategorySectionState();
+}
+
+class _CategorySectionState extends State<CategorySection> {
+  List categories = [];
+  bool isLoading = true;
+  String searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCategories();
+  }
+
+  Future<void> fetchCategories() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final response =
+          await http.get(Uri.parse('http://192.168.31.23:5000/categories'));
+      if (response.statusCode == 200) {
+        setState(() {
+          categories = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load categories');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print(e);
+    }
+  }
+
+  Future<void> updateCategory(String id, Map<String, dynamic> category) async {
+    final response = await http.put(
+      Uri.parse('http://192.168.31.23:5000/categories/$id'),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
+      body: json.encode(category),
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Category updated successfully.')),
+      );
+      fetchCategories();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update category.')),
+      );
+      throw Exception('Failed to update category');
+    }
+  }
+
+  Future<void> addCategory(Map<String, dynamic> category) async {
+    final response = await http.post(
+      Uri.parse('http://192.168.31.23:5000/categories/'),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
+      body: json.encode(category),
+    );
+
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Category added successfully.')),
+      );
+      fetchCategories();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add Category. Please try again.')),
+      );
+      throw Exception('Failed to add category');
+    }
+  }
+
+  void _showCategoryDialog({Map<String, dynamic>? category}) {
+    final TextEditingController categoryIdController =
+        TextEditingController(text: category?['categoryId']);
+    final TextEditingController nameController =
+        TextEditingController(text: category?['name']);
+    final TextEditingController descriptionController =
+        TextEditingController(text: category?['description']);
+    final TextEditingController imageUrlController =
+        TextEditingController(text: category?['imageUrl']);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(category == null ? 'Add Category' : 'Edit Category'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildTextField(categoryIdController, 'Category Id'),
+                _buildTextField(nameController, 'Category Name'),
+                _buildTextField(descriptionController, 'Description'),
+                _buildTextField(imageUrlController, 'Image URL'),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Map<String, dynamic> categoryData = {
+                  'categoryId': categoryIdController.text,
+                  'name': nameController.text,
+                  'description': descriptionController.text,
+                  'imageUrl': imageUrlController.text,
+                };
+
+                if (category == null) {
+                  // Add new category
+                  addCategory(categoryData);
+                } else {
+                  updateCategory(category['_id'], categoryData);
+                }
+                Navigator.of(context).pop();
+              },
+              child: Text(category == null ? 'Add' : 'Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
     return TextField(
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isLoading
+        ? Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Search Categories',
+                    suffixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      searchQuery = value;
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: fetchCategories,
+                  child: ListView.builder(
+                    padding: EdgeInsets.all(10),
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      var category = categories[index];
+                      if (category['name']
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase())) {
+                        return _buildCategoryItem(category);
+                      }
+                      return Container();
+                    },
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => _showCategoryDialog(),
+                child: Text('Add Category'),
+              ),
+            ],
+          );
+  }
+
+  Widget _buildCategoryItem(category) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: EdgeInsets.symmetric(vertical: 5),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundImage: NetworkImage(
+              category['imageUrl'] ?? 'https://via.placeholder.com/150'),
         ),
-        prefixIcon: Icon(Icons.search),
+        title: Text(category['name'],
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        trailing: IconButton(
+          icon: Icon(Icons.edit),
+          onPressed: () {
+            _showCategoryDialog(category: category);
+          },
+        ),
       ),
-      onChanged: (value) {
-        onSearchChanged(value);
-      },
-    );
-  }
-
-  // Dynamically build product list with search functionality
-  Widget _buildProductList(BuildContext context) {
-    return Column(
-      children: filteredProducts.map((product) {
-        return Card(
-          elevation: 4,
-          margin: EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(product['imageUrl'] ?? 'https://via.placeholder.com/150'), // Fetch from API
-            ),
-            title: Text(product['name']),
-            subtitle: Text('CategoryId: ${product['categoryId']}\nStock: ${product['stock']}\nPrice: ₹${product['price']}'),
-            trailing: IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                deleteProduct(product['id']);
-              },
-            ),
-            onTap: () {
-              // Navigate to product details or edit screen
-            },
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // Dynamically build category list with search functionality
-  Widget _buildCategoryList(BuildContext context) {
-    return Column(
-      children: filteredCategories.map((category) {
-        return Card(
-          elevation: 4,
-          margin: EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(category['imageUrl'] ?? 'https://via.placeholder.com/150'), // Fetch from API
-            ),
-            title: Text(category['name']),
-            trailing: IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                deleteCategory(category['id']);
-              },
-            ),
-            onTap: () {
-              // Navigate to category details or edit screen
-            },
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // Floating Action Button Menu for creating new products or categories
-  Widget _buildFABMenu(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FloatingActionButton.extended(
-          label: const Text('Add Product'),
-          icon: const Icon(Icons.add),
-          backgroundColor: Colors.deepOrange,
-          onPressed: () {
-            _showAddProductDialog();
-          },
-        ),
-        SizedBox(height: 10),
-        FloatingActionButton.extended(
-          label: const Text('Add Category'),
-          icon: const Icon(Icons.add),
-          backgroundColor: Colors.deepOrange,
-          onPressed: () {
-            _showAddCategoryDialog();
-          },
-        ),
-      ],
-    );
-  }
-
-  // Dialog to add new product
-  void _showAddProductDialog() {
-    String productId = '';
-    String name = '';
-    String description = '';
-    String categoryId = '';
-    int price = 0;
-    int stock = 0;
-    String imageUrl = '';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Add New Product'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Fields to input new product details
-                TextField(
-                  decoration: InputDecoration(labelText: 'ProductId'),
-                  onChanged: (value) {
-                    productId = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Product Name'),
-                  onChanged: (value) {
-                    name = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'CategoryId'),
-                  onChanged: (value) {
-                    categoryId = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Description'),
-                  onChanged: (value) {
-                    description = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Price'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    price = int.tryParse(value) ?? 0;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Stock'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    stock = int.tryParse(value) ?? 0;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Image URL'),
-                  onChanged: (value) {
-                    imageUrl = value;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text('Add'),
-              onPressed: () {
-                addProduct(productId, name, categoryId, description, price, stock, imageUrl);
-                Navigator.of(context).pop(); // Close the dialog after adding
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Dialog to add new category
-  void _showAddCategoryDialog() {
-    String categoryId = '';
-    String name = '';
-    String description = '';
-    String imageUrl = '';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Add New Category'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Fields to input new category details
-                TextField(
-                  decoration: InputDecoration(labelText: 'CategoryId'),
-                  onChanged: (value) {
-                    categoryId = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Category Name'),
-                  onChanged: (value) {
-                    name = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Description'),
-                  onChanged: (value) {
-                    description = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Image URL'),
-                  onChanged: (value) {
-                    imageUrl = value;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text('Add'),
-              onPressed: () {
-                addCategory(categoryId, name, description, imageUrl);
-                Navigator.of(context).pop(); // Close the dialog after adding
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

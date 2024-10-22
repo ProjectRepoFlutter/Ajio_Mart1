@@ -2,7 +2,7 @@ import 'package:ajio_mart/utils/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:ajio_mart/screens/home_screen.dart';
-import 'package:ajio_mart/screens/cart_screen.dart'; // Import your CartScreen
+import 'package:ajio_mart/screens/cart_screen.dart';
 import 'package:ajio_mart/screens/profile_screen.dart';
 import 'package:ajio_mart/screens/all_products_screen.dart';
 import 'package:ajio_mart/api_config.dart';
@@ -11,27 +11,69 @@ import 'package:ajio_mart/utils/user_global.dart' as globals;
 import 'dart:convert';
 
 class NavBarWidget extends StatefulWidget {
-  const NavBarWidget({Key? key}) : super(key: key);
+  final String? contactType;
+  final String? contactValue;
+  const NavBarWidget({Key? key, this.contactType, this.contactValue})
+      : super(key: key);
 
   @override
-  State<NavBarWidget> createState() => _NavBarWidgetState();
+  NavBarWidgetState createState() => NavBarWidgetState();
 }
 
-class _NavBarWidgetState extends State<NavBarWidget> {
+class NavBarWidgetState extends State<NavBarWidget> {
   final _controller = PersistentTabController(initialIndex: 0);
   int _currentIndex = 0; // Track the currently selected index
 
+  // Create GlobalKeys for each screen
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey();
+  final GlobalKey<ProductScreenState> _productKey = GlobalKey();
+  final GlobalKey<CartScreenState> _cartKey = GlobalKey();
+
   @override
   void initState() {
-    setContact();
+    if (widget.contactType != null && widget.contactValue != null) {
+      getUserInfo(widget.contactType, widget.contactValue);
+    } else {
+      setContact();
+    }
     super.initState();
+  }
+
+  // Method to update the current index
+  void updateCurrentIndex(int index) {
+    setState(() {
+      _currentIndex = index;
+      _controller.index = index; // Update the controller's index
+    });
+  }
+
+  // Refresh the state of the selected screen
+  void _onTabSelected(int index) {
+    if (_currentIndex == index) {
+      // If the same tab is selected, refresh the content
+      switch (index) {
+        case 0:
+          _homeKey.currentState?.refresh(); // Refresh HomeScreen
+          break;
+        case 1:
+          _productKey.currentState?.refresh(); // Refresh AllProductScreen
+          break;
+        case 2:
+          _cartKey.currentState?.refresh(); // Refresh CartScreen
+          break;
+      }
+    } else {
+      // If a different tab is selected, update the index
+      updateCurrentIndex(index);
+    }
   }
 
   List<Widget> screens() {
     return [
-      const HomeScreen(),
-      const AllProductScreen(),
-      const CartScreen(),
+      HomeScreen(key: _homeKey), // Ensure HomeScreen has refresh method
+      AllProductScreen(
+          key: _productKey), // Ensure AllProductScreen has refresh method
+      CartScreen(key: _cartKey), // Ensure CartScreen has refresh method
       ProfileScreen(),
     ];
   }
@@ -73,7 +115,8 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     await getUserInfo(contactType, contactValue);
   }
 
-  static Future<void> getUserInfo(String? contactType, String? contactValue) async {
+  static Future<void> getUserInfo(
+      String? contactType, String? contactValue) async {
     try {
       final response = await http
           .get(Uri.parse(APIConfig.getUserInfo + contactValue.toString()));
@@ -89,12 +132,6 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     } catch (e) {
       print('Error fetching user info: $e');
     }
-  }
-
-  void _onTabSelected(int index) {
-    setState(() {
-      _currentIndex = index; // Update the current index
-    });
   }
 
   @override

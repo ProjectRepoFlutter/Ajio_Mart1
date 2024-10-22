@@ -106,7 +106,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
             SizedBox(height: 10),
             Text(
-              'Total Price: \$${widget.order['totalPrice']}', // Display total price
+              'Total Price: \₹${widget.order['totalPrice']}', // Display total price
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
@@ -155,7 +155,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Quantity: ${item['quantity']}'),
-                          Text('Price: \$${item['price']}'), // Display price for the product
+                          Text('Price: \₹${item['price']}'), // Display price for the product
                         ],
                       ),
                     ),

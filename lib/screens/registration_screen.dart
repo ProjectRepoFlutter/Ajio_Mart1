@@ -45,7 +45,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                     builder: (context) =>
-                        NavBarWidget()), // LoginScreen is your desired destination
+                        NavBarWidget(contactType : widget.type , contactValue:  widget.contact)), // LoginScreen is your desired destination
                 (Route<dynamic> route) =>
                     false, // This removes all previous routes
               );
@@ -58,7 +58,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                     builder: (context) =>
-                        NavBarWidget()), // LoginScreen is your desired destination
+                        NavBarWidget(contactType : widget.type , contactValue:  widget.contact)), // LoginScreen is your desired destination
                 (Route<dynamic> route) =>
                     false, // This removes all previous routes
               );

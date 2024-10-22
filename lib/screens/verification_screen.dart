@@ -96,7 +96,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                     builder: (context) =>
-                        NavBarWidget()), // LoginScreen is your desired destination
+                        NavBarWidget(contactType : widget.type , contactValue:  widget.contact)), // LoginScreen is your desired destination
                 (Route<dynamic> route) =>
                     false, // This removes all previous routes
               );

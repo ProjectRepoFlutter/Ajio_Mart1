@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ajio_mart/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -83,7 +84,7 @@ class _ProductSectionState extends State<ProductSection> {
     });
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.31.23:5000/products'));
+          await http.get(Uri.parse(APIConfig.getProduct));
       if (response.statusCode == 200) {
         setState(() {
           products = json.decode(response.body);
@@ -102,7 +103,7 @@ class _ProductSectionState extends State<ProductSection> {
 
   Future<void> addProduct(Map<String, dynamic> product) async {
     final response = await http.post(
-      Uri.parse('http://192.168.31.23:5000/products'),
+      Uri.parse(APIConfig.getProduct),
       headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
       body: json.encode(product),
     );
@@ -122,7 +123,7 @@ class _ProductSectionState extends State<ProductSection> {
 
   Future<void> updateProduct(String id, Map<String, dynamic> product) async {
     final response = await http.put(
-      Uri.parse('http://192.168.31.23:5000/products/$id'),
+      Uri.parse(APIConfig.getProduct + id),
       headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
       body: json.encode(product),
     );
@@ -315,7 +316,7 @@ class _CategorySectionState extends State<CategorySection> {
     });
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.31.23:5000/categories'));
+          await http.get(Uri.parse(APIConfig.getAllCategories));
       if (response.statusCode == 200) {
         setState(() {
           categories = json.decode(response.body);
@@ -334,7 +335,7 @@ class _CategorySectionState extends State<CategorySection> {
 
   Future<void> updateCategory(String id, Map<String, dynamic> category) async {
     final response = await http.put(
-      Uri.parse('http://192.168.31.23:5000/categories/$id'),
+      Uri.parse(APIConfig.getAllCategories + id),
       headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
       body: json.encode(category),
     );
@@ -354,7 +355,7 @@ class _CategorySectionState extends State<CategorySection> {
 
   Future<void> addCategory(Map<String, dynamic> category) async {
     final response = await http.post(
-      Uri.parse('http://192.168.31.23:5000/categories/'),
+      Uri.parse(APIConfig.getAllCategories),
       headers: {'Content-Type': 'application/json', 'Authorization': 'admin'},
       body: json.encode(category),
     );

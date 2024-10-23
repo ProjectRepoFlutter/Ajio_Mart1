@@ -1,5 +1,7 @@
 import 'package:ajio_mart/api_config.dart';
 import 'package:ajio_mart/models/product_model.dart';
+import 'package:ajio_mart/models/special_widget_list.dart';
+import 'package:ajio_mart/widgets/category_home_widget.dart';
 import 'package:ajio_mart/widgets/special_home_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -23,61 +25,49 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   List<Category> categories = [];
+  List<SpecialList> specialLists = [];
+  // List<String> produc = ["1","2", "3","4","5","6","7"];
   bool isLoading = true;
   String searchQuery = '';
   // Variable for the number of products to display.
-  final int numberOfProducts = 5; // This can be set dynamically
-  final List<Product> products = [
-  Product(
-    id: '1', // Placeholder ID
-    name: 'Jacket',
-    description: 'A warm, stylish jacket for cold weather.', // Add description
-    price: 305.0, // Convert price to double without currency symbol
-    imageUrl: 'https://example.com/jacket.jpg', // Placeholder image URL
-  ),
-  Product(
-    id: '2', // Placeholder ID
-    name: 'Cap',
-    description: 'A trendy cap for all seasons.', // Add description
-    price: 115.0, // Convert price to double without currency symbol
-    imageUrl: 'https://example.com/cap.jpg', // Placeholder image URL
-  ),
-  Product(
-    id: '3', // Placeholder ID
-    name: 'Boots',
-    description: 'Durable boots perfect for hiking.', // Add description
-    price: 105.0, // Convert price to double without currency symbol
-    imageUrl: 'https://example.com/boots.jpg', // Placeholder image URL
-  ),
-  Product(
-    id: '4', // Placeholder ID
-    name: 'Heater',
-    description: 'A portable heater to keep you warm.', // Add description
-    price: 450.0, // Convert price to double without currency symbol
-    imageUrl: 'https://example.com/heater.jpg', // Placeholder image URL
-  ),
-  Product(
-    id: '5', // Placeholder ID
-    name: 'Blanket',
-    description: 'A cozy blanket for a good night\'s sleep.', // Add description
-    price: 125.0, // Convert price to double without currency symbol
-    imageUrl: 'https://example.com/blanket.jpg', // Placeholder image URL
-  ),
-];
+  final int numberOfProducts = 7; // This can be set dynamically
+  List<Product> products = [];
 
-  String category1 = "Essentials";
-
-  void refresh() {
+  void refresh() async {
     // Logic to refresh the home screen, e.g., fetch new data
     print('HomeScreen refreshed');
     // You can call your data fetching method here
-    fetchCategories();
+    await fetchSpecialLists();
+    await fetchCategories();
   }
 
   @override
   void initState() {
     super.initState();
-    fetchCategories();
+    refresh(); // Fetch special lists on init
+  }
+
+  Future<void> fetchSpecialLists() async {
+    try {
+      final response = await http
+          .get(Uri.parse(APIConfig.getSpecialWidgets)); // Update with your API
+      if (response.statusCode == 200) {
+        final List<dynamic> specialListJson = jsonDecode(response.body);
+        setState(() {
+          specialLists = specialListJson
+              .map((json) => SpecialList.fromJson(json))
+              .toList();
+        });
+      } else {
+        throw Exception('Failed to load special lists');
+      }
+    } catch (e) {
+      print('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // Set loading to false after fetching
+      });
+    }
   }
 
   Future<void> fetchCategories() async {
@@ -192,8 +182,8 @@ class HomeScreenState extends State<HomeScreen> {
                       Container(
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: NetworkImage(
-                                APIConfig.logoUrl), // Replace with your image URL
+                            image: NetworkImage(APIConfig
+                                .logoUrl), // Replace with your image URL
                             fit: BoxFit.cover, // Cover the entire area
                           ),
                         ),
@@ -276,125 +266,77 @@ class HomeScreenState extends State<HomeScreen> {
                         .toList(),
                   ),
                   Divider(), // Adding a separator
-
-                  SpecialHomeWidget(
-                    heading: 'Electronics',
-                    products: products,
-                    numberOfProducts: 4,
-                    showViewAll: true, // Show "View All" button
-                    onViewAllTap: () {
-                      // Navigate to all Electronics products
-                      PersistentNavBarNavigator.pushNewScreen(context,
-                              screen: ProductScreen(
-                                categoryId: "1",
-                                categoryName: "bottle",
-                              ),
-                              withNavBar: true);
-                            print("View All clicked");
-                    },
-                  ),
-                  SpecialHomeWidget(
-                    heading: 'Fashion',
-                    products: products,
-                    numberOfProducts: 4,
-                    showViewAll: false, // Hide "View All" button
-                  ),
-                  //grid 1
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          category1,
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Handle "View All" button tap event
-                            PersistentNavBarNavigator.pushNewScreen(context,
-                              screen: ProductScreen(
-                                categoryId: "1",
-                                categoryName: "bottle",
-                              ),
-                              withNavBar: true);
-                            print("View All clicked");
-                          },
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ),
-                      ],
+                  SingleChildScrollView(
+                    child: Column(
+                      children: specialLists.map((SpecialList) {
+                        // fetchProduct(SpecialList.productIdList);
+                        return SpecialHomeWidget(
+                          heading: SpecialList.title,
+                          products: SpecialList.productIdList,
+                          numberOfProducts:
+                              3, // You can dynamically adjust this if needed
+                          showViewAll: true,
+                        );
+                      }).toList(),
                     ),
                   ),
-                  // Horizontal scrollable list of products
-                  // Container(
-                  //   height: 200,
-                  //   child: ListView.builder(
-                  //     scrollDirection: Axis.horizontal,
-                  //     itemCount: numberOfProducts +
-                  //         1, // +1 for the "View All" button at the end
-                  //     itemBuilder: (context, index) {
-                  //       if (index < numberOfProducts &&
-                  //           index < products.length) {
-                  //         return _buildProductCard(products[index]);
-                  //       } else {
-                  //         return _buildViewAllButton();
-                  //       }
-                  //     },
+                  SingleChildScrollView(
+                    child: Column(
+                      children: categories.map((Category) {
+                        // fetchProduct(SpecialList.productIdList);
+                        return CategoryHomeWidget(
+                          heading: Category.name,
+                          description: Category.description,
+                          categoryId: Category.categoryId,
+                          numberOfProducts:
+                              3, // You can dynamically adjust this if needed
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                  // // Categories Grid
+                  // GridView.builder(
+                  //   shrinkWrap: true,
+                  //   physics: NeverScrollableScrollPhysics(),
+                  //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  //     crossAxisCount: 2,
+                  //     childAspectRatio: 0.8,
                   //   ),
+                  //   itemCount: categories.length,
+                  //   itemBuilder: (context, index) {
+                  //     final category = categories[index];
+                  //     return GestureDetector(
+                  //       onTap: () {
+                  //         PersistentNavBarNavigator.pushNewScreen(context,
+                  //             screen: ProductScreen(
+                  //               categoryId: category.categoryId,
+                  //               categoryName: category.name,
+                  //             ),
+                  //             withNavBar: true);
+                  //       },
+                  //       child: Card(
+                  //         elevation: 2,
+                  //         color: AppColors.backgroundColor,
+                  //         child: Column(
+                  //           children: [
+                  //             Image.network(category.imageUrl,
+                  //                 fit: BoxFit.cover),
+                  //             Padding(
+                  //               padding: const EdgeInsets.all(8.0),
+                  //               child: Text(
+                  //                 category.name,
+                  //                 style: TextStyle(
+                  //                     fontWeight: FontWeight.bold,
+                  //                     color: AppColors.textColor),
+                  //               ),
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     );
+                  //   },
                   // ),
-                  Divider(), // Adding a separator
-
-                  // Categories Grid
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                    ),
-                    itemCount: categories.length,
-                    itemBuilder: (context, index) {
-                      final category = categories[index];
-                      return GestureDetector(
-                        onTap: () {
-                          PersistentNavBarNavigator.pushNewScreen(context,
-                              screen: ProductScreen(
-                                categoryId: category.categoryId,
-                                categoryName: category.name,
-                              ),
-                              withNavBar: true);
-                        },
-                        child: Card(
-                          elevation: 2,
-                          color: AppColors.backgroundColor,
-                          child: Column(
-                            children: [
-                              Image.network(category.imageUrl,
-                                  fit: BoxFit.cover),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  category.name,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textColor),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
             ),

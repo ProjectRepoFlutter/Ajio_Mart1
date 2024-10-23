@@ -19,21 +19,36 @@ class ProductScreenState extends State<AllProductScreen> {
   // Map to store quantity of each product in the cart
   Map<String, int> productQuantities = {};
 
-  void refresh() {
-    fetchProducts();
+  void refresh() async {
+    setState(() {
+      isLoading = true;
+    });
+    await fetchCartAndProducts(); // Fetch cart and products when refreshing
   }
 
   @override
   void initState() {
     super.initState();
-    fetchProducts();
+    fetchCartAndProducts();
   }
 
   Future<void> _refreshData() async {
     setState(() {
-      isLoading = true; // Set loading to true while refreshing
+      isLoading = true;
     });
-    await fetchProducts(); // Fetch the categories again
+    await fetchCartAndProducts(); // Fetch cart and products when refreshing
+  }
+
+  // Fetch both products and cart data
+  Future<void> fetchCartAndProducts() async {
+    try {
+      await Future.wait([fetchProducts(), fetchCart()]);
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> fetchProducts() async {
@@ -42,16 +57,36 @@ class ProductScreenState extends State<AllProductScreen> {
       if (response.statusCode == 200) {
         setState(() {
           products = jsonDecode(response.body);
-          isLoading = false;
         });
       } else {
         throw Exception('Failed to load products');
       }
     } catch (e) {
       print('Error: $e');
+    } finally {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> fetchCart() async {
+    final String apiUrl = APIConfig.getAllItemInCart + globals.userContactValue.toString();
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final cartData = jsonDecode(response.body);
+        setState(() {
+          var items = cartData['items'];
+          productQuantities = {
+            for (var item in items) item['productId']: item['quantity']
+          };
+        });
+      } else {
+        throw Exception('Failed to fetch cart');
+      }
+    } catch (e) {
+      print('Error fetching cart: $e');
     }
   }
 
@@ -109,7 +144,7 @@ class ProductScreenState extends State<AllProductScreen> {
       if (response.statusCode == 200) {
         setState(() {
           productQuantities[itemId] = newQuantity; // Update quantity locally
-        }); // Refresh cart data after update
+        });
       } else {
         throw Exception('Failed to update quantity');
       }
@@ -203,7 +238,6 @@ class ProductScreenState extends State<AllProductScreen> {
                               width: double.infinity,
                               errorBuilder: (BuildContext context,
                                   Object exception, StackTrace? stackTrace) {
-                                // Display a fallback image or placeholder when the image fails to load
                                 return Image.network(
                                   APIConfig.logoUrl, // Fallback image
                                   fit: BoxFit.cover,
@@ -269,7 +303,7 @@ class ProductScreenState extends State<AllProductScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 10.0),
+                            SizedBox(height: 5.0),
 
                             // Add to Cart / Increment / Decrement section
                             quantityInCart > 0
@@ -282,7 +316,7 @@ class ProductScreenState extends State<AllProductScreen> {
                                           border:
                                               Border.all(color: Colors.grey),
                                           borderRadius:
-                                              BorderRadius.circular(8),
+                                              BorderRadius.circular(15),
                                         ),
                                         child: Row(
                                           children: [

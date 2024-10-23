@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'package:ajio_mart/splash_screen.dart';
 import 'package:ajio_mart/widgets/nav_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -63,7 +64,7 @@ class MyApp extends StatelessWidget {
             primarySwatch: Colors.green,
           ),
           home: isLoggedIn
-          ? NavBarWidget()
+          ? SplashScreen()
           : LoginScreen(),
         );
       },

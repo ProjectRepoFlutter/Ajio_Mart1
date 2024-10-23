@@ -300,11 +300,39 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: TextStyle(
                   fontSize: 18, color: isInStock ? Colors.green : Colors.red),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 25),
+
+            Row(
+              children: List.generate(5, (starIndex) {
+                if (starIndex < productDetails!['rating'].floor()) {
+                  // Full stars for the integer part of the rating
+                  return Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                    size: 25.0,
+                  );
+                } else if (starIndex == productDetails!['rating'].floor() &&
+                    productDetails!['rating'] % 1 != 0) {
+                  // Half star for the decimal part (if rating is not a whole number)
+                  return Icon(
+                    Icons.star_half,
+                    color: Colors.amber,
+                    size: 25.0,
+                  );
+                } else {
+                  // Empty stars for the rest
+                  return Icon(
+                    Icons.star_border,
+                    color: Colors.amber,
+                    size: 25.0,
+                  );
+                }
+              }),
+            ),
 
             // Product rating and rating count
             Text(
-              'Rating: ${productDetails!['rating']} ⭐ (${productDetails!['ratingCount']} ratings)',
+              '(${productDetails!['ratingCount']} ratings)',
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 16),
@@ -317,7 +345,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(15),
                         ),
                         child: Row(
                           children: [
